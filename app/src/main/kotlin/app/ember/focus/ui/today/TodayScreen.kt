@@ -151,60 +151,108 @@ fun TodayScreen(
             .navigationBarsPadding()
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // TOP BAR: Navigation controls & Date switcher
+            // TOP BAR: Branding on left, Quick Actions on right
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = 20.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.LocalFireDepartment,
+                        contentDescription = null,
+                        tint = AmberAccent,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "EMBER",
+                        style = Typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = AmberAccent,
+                        letterSpacing = 2.sp
+                    )
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     IconButton(
                         onClick = onNavigateToStats,
                         modifier = Modifier
-                            .size(40.dp)
+                            .size(38.dp)
                             .clip(CircleShape)
                             .background(SecondaryPillFill)
                     ) {
                         Icon(
                             imageVector = Icons.Default.BarChart,
                             contentDescription = "Stats",
-                            tint = TextCream
+                            tint = TextCream,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
 
                     if (BuildConfig.DEBUG) {
-                        Spacer(modifier = Modifier.width(8.dp))
                         IconButton(
                             onClick = onNavigateToCandleLab,
                             modifier = Modifier
-                                .size(40.dp)
+                                .size(38.dp)
                                 .clip(CircleShape)
                                 .background(SecondaryPillFill)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Science,
                                 contentDescription = "Candle Lab",
-                                tint = AmberAccent
+                                tint = AmberAccent,
+                                modifier = Modifier.size(20.dp)
                             )
                         }
                     }
-                }
 
-                // Date Navigator in center
+                    IconButton(
+                        onClick = onNavigateToSettings,
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(SecondaryPillFill)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings",
+                            tint = TextCream,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+
+            // DATE SELECTOR PILL (Centered, spacious)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(SecondaryPillFill)
+                        .border(1.dp, SecondaryPillBorder, RoundedCornerShape(20.dp))
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(
                         onClick = { viewModel.prevDay() },
-                        modifier = Modifier.size(36.dp)
+                        modifier = Modifier.size(34.dp)
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Previous day",
-                            tint = TextCream
+                            tint = TextCream,
+                            modifier = Modifier.size(16.dp)
                         )
                     }
 
@@ -223,16 +271,16 @@ fun TodayScreen(
                                     d.dayOfMonth
                                 ).show()
                             }
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             text = dateLabel,
                             style = Typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.SemiBold,
                             color = TextCream
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
                         Icon(
                             imageVector = Icons.Default.CalendarToday,
                             contentDescription = "Pick date",
@@ -244,28 +292,15 @@ fun TodayScreen(
                     IconButton(
                         onClick = { viewModel.nextDay() },
                         enabled = !isToday,
-                        modifier = Modifier.size(36.dp)
+                        modifier = Modifier.size(34.dp)
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                             contentDescription = "Next day",
-                            tint = if (isToday) AshGray else TextCream
+                            tint = if (isToday) AshGray else TextCream,
+                            modifier = Modifier.size(16.dp)
                         )
                     }
-                }
-
-                IconButton(
-                    onClick = onNavigateToSettings,
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(SecondaryPillFill)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Settings,
-                        contentDescription = "Settings",
-                        tint = TextCream
-                    )
                 }
             }
 
@@ -450,8 +485,9 @@ fun TodayScreen(
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(180.dp)
-                                .padding(8.dp),
+                                .fillMaxWidth()
+                                .height(220.dp)
+                                .padding(horizontal = 16.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             CandleView(
@@ -482,7 +518,7 @@ fun TodayScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f),
-                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+                    contentPadding = PaddingValues(start = 20.dp, top = 8.dp, end = 20.dp, bottom = 100.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     items(
@@ -504,7 +540,8 @@ fun TodayScreen(
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 24.dp)
+                .navigationBarsPadding()
+                .padding(bottom = 20.dp)
         ) {
             Box(
                 modifier = Modifier

@@ -1,9 +1,5 @@
 package app.ember.focus.ui.onboarding
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -31,7 +29,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -63,9 +60,17 @@ fun OnboardingScreen(
     settingsRepository: SettingsRepository,
     onFinishOnboarding: () -> Unit
 ) {
-    var currentPage by remember { mutableIntStateOf(0) }
+    val pagerState = rememberPagerState(pageCount = { 3 })
     var dailyGoalHours by remember { mutableFloatStateOf(4f) }
     val scope = rememberCoroutineScope()
+
+    val completeOnboarding: () -> Unit = {
+        scope.launch {
+            settingsRepository.updateDailyGoalMinutes((dailyGoalHours * 60).toInt())
+            settingsRepository.setOnboardingCompleted(true)
+            onFinishOnboarding()
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -77,26 +82,44 @@ fun OnboardingScreen(
             )
             .statusBarsPadding()
             .navigationBarsPadding()
-            .padding(24.dp)
+            .padding(horizontal = 24.dp, vertical = 16.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Top branding
-            Text(
-                text = "EMBER",
-                style = Typography.labelMedium,
-                color = AmberAccent,
-                modifier = Modifier.padding(top = 16.dp)
-            )
+            // Top branding with Skip action
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "EMBER",
+                    style = Typography.labelMedium,
+                    color = AmberAccent
+                )
 
-            // Animated Page Content
-            AnimatedContent(
-                targetState = currentPage,
-                transitionSpec = { fadeIn() togetherWith fadeOut() },
-                label = "onboardingPager",
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(14.dp))
+                        .clickable(onClick = completeOnboarding)
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = "Skip",
+                        style = Typography.labelLarge,
+                        color = AmberAccent
+                    )
+                }
+            }
+
+            // Swipeable Horizontal Pager
+            HorizontalPager(
+                state = pagerState,
                 modifier = Modifier.weight(1f)
             ) { page ->
                 Column(
@@ -231,53 +254,54 @@ fun OnboardingScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Page indicator dots
+                // Page indicator dots (clickable)
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(bottom = 20.dp)
                 ) {
                     for (i in 0..2) {
-                        val isSelected = i == currentPage
+                        val isSelected = i == pagerState.currentPage
                         Box(
                             modifier = Modifier
-                                .size(if (isSelected) 8.dp else 6.dp)
+                                .size(if (isSelected) 10.dp else 8.dp)
                                 .clip(CircleShape)
-                                .background(if (isSelected) AmberAccent else TextMuted.copy(alpha = 0.4f))
+                                .background(if (isSelected) AmberAccent else TextMuted.copy(alpha = 0.35f))
+                                .clickable {
+                                    scope.launch {
+                                        pagerState.animateScrollToPage(i)
+                                    }
+                                }
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Action Pill
+                // Action Pill — whole Box is clickable with large touch target
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(32.dp))
+                        .height(56.dp)
+                        .clip(RoundedCornerShape(28.dp))
                         .background(PrimaryPillFill)
-                        .padding(vertical = 16.dp)
-                        .padding(horizontal = 24.dp),
+                        .clickable {
+                            if (pagerState.currentPage < 2) {
+                                scope.launch {
+                                    pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                                }
+                            } else {
+                                completeOnboarding()
+                            }
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = if (currentPage < 2) "Continue" else "Light your first candle",
+                        text = if (pagerState.currentPage < 2) "Continue" else "Light your first candle",
                         style = Typography.labelLarge,
                         fontWeight = FontWeight.Bold,
-                        color = PrimaryPillText,
-                        modifier = Modifier.clickable {
-                            if (currentPage < 2) {
-                                currentPage++
-                            } else {
-                                scope.launch {
-                                    settingsRepository.updateDailyGoalMinutes((dailyGoalHours * 60).toInt())
-                                    settingsRepository.setOnboardingCompleted(true)
-                                    onFinishOnboarding()
-                                }
-                            }
-                        }
+                        color = PrimaryPillText
                     )
                 }
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }
