@@ -1,0 +1,284 @@
+package app.ember.focus.ui.onboarding
+
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import app.ember.focus.domain.repository.SettingsRepository
+import app.ember.focus.ui.candle.CandlePhase
+import app.ember.focus.ui.candle.CandleState
+import app.ember.focus.ui.candle.CandleView
+import app.ember.focus.ui.theme.AmberAccent
+import app.ember.focus.ui.theme.BackgroundBottom
+import app.ember.focus.ui.theme.BackgroundTop
+import app.ember.focus.ui.theme.PrimaryPillFill
+import app.ember.focus.ui.theme.PrimaryPillText
+import app.ember.focus.ui.theme.SecondaryPillFill
+import app.ember.focus.ui.theme.TextCream
+import app.ember.focus.ui.theme.TextMuted
+import app.ember.focus.ui.theme.Typography
+import kotlinx.coroutines.launch
+
+@Composable
+fun OnboardingScreen(
+    settingsRepository: SettingsRepository,
+    onFinishOnboarding: () -> Unit
+) {
+    var currentPage by remember { mutableIntStateOf(0) }
+    var dailyGoalHours by remember { mutableFloatStateOf(4f) }
+    val scope = rememberCoroutineScope()
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(BackgroundTop, BackgroundBottom)
+                )
+            )
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(24.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            // Top branding
+            Text(
+                text = "EMBER",
+                style = Typography.labelMedium,
+                color = AmberAccent,
+                modifier = Modifier.padding(top = 16.dp)
+            )
+
+            // Animated Page Content
+            AnimatedContent(
+                targetState = currentPage,
+                transitionSpec = { fadeIn() togetherWith fadeOut() },
+                label = "onboardingPager",
+                modifier = Modifier.weight(1f)
+            ) { page ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    when (page) {
+                        0 -> {
+                            // Page 1: Candle concept
+                            Box(
+                                modifier = Modifier
+                                    .size(220.dp)
+                                    .padding(8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CandleView(
+                                    state = CandleState(
+                                        progress = 0.25f,
+                                        phase = CandlePhase.BURNING
+                                    )
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Text(
+                                text = "Focus as a Burning Candle",
+                                style = Typography.headlineMedium,
+                                color = TextCream,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Text(
+                                text = "Every deep work session is a real candle that melts away. Watch your focus take physical form and single-task with intention.",
+                                style = Typography.bodyMedium,
+                                color = TextMuted,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+
+                        1 -> {
+                            // Page 2: Strict mode
+                            Box(
+                                modifier = Modifier
+                                    .size(140.dp)
+                                    .clip(CircleShape)
+                                    .background(SecondaryPillFill),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Shield,
+                                    contentDescription = null,
+                                    tint = AmberAccent,
+                                    modifier = Modifier.size(64.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(32.dp))
+                            Text(
+                                text = "Strict Discipline",
+                                style = Typography.headlineMedium,
+                                color = TextCream,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Text(
+                                text = "Leaving Ember for another app blows out your candle and marks the session broken. Locking your phone is always safe.",
+                                style = Typography.bodyMedium,
+                                color = TextMuted,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+
+                        2 -> {
+                            // Page 3: Daily goal setup
+                            Box(
+                                modifier = Modifier
+                                    .size(100.dp)
+                                    .clip(CircleShape)
+                                    .background(AmberAccent.copy(alpha = 0.15f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.LocalFireDepartment,
+                                    contentDescription = null,
+                                    tint = AmberAccent,
+                                    modifier = Modifier.size(52.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Text(
+                                text = "Set Your Ambition",
+                                style = Typography.headlineMedium,
+                                color = TextCream,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Choose your daily focus target to ignite your streak.",
+                                style = Typography.bodyMedium,
+                                color = TextMuted,
+                                textAlign = TextAlign.Center
+                            )
+
+                            Spacer(modifier = Modifier.height(28.dp))
+
+                            Text(
+                                text = "${dailyGoalHours.toInt()} hours / day",
+                                style = Typography.displayMedium,
+                                color = AmberAccent
+                            )
+
+                            Slider(
+                                value = dailyGoalHours,
+                                onValueChange = { dailyGoalHours = it },
+                                valueRange = 1f..8f,
+                                steps = 6,
+                                colors = SliderDefaults.colors(
+                                    thumbColor = AmberAccent,
+                                    activeTrackColor = AmberAccent,
+                                    inactiveTrackColor = SecondaryPillFill
+                                ),
+                                modifier = Modifier.fillMaxWidth(0.85f)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Bottom navigation: Indicator dots and Pill button
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Page indicator dots
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    for (i in 0..2) {
+                        val isSelected = i == currentPage
+                        Box(
+                            modifier = Modifier
+                                .size(if (isSelected) 8.dp else 6.dp)
+                                .clip(CircleShape)
+                                .background(if (isSelected) AmberAccent else TextMuted.copy(alpha = 0.4f))
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Action Pill
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(32.dp))
+                        .background(PrimaryPillFill)
+                        .padding(vertical = 16.dp)
+                        .padding(horizontal = 24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = if (currentPage < 2) "Continue" else "Light your first candle",
+                        style = Typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = PrimaryPillText,
+                        modifier = Modifier.clickable {
+                            if (currentPage < 2) {
+                                currentPage++
+                            } else {
+                                scope.launch {
+                                    settingsRepository.updateDailyGoalMinutes((dailyGoalHours * 60).toInt())
+                                    settingsRepository.setOnboardingCompleted(true)
+                                    onFinishOnboarding()
+                                }
+                            }
+                        }
+                    )
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+        }
+    }
+}

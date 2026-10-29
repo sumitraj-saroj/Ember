@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup>
+        <include domain="database" path="ember.db" />
+        <include domain="database" path="ember.db-wal" />
+        <include domain="database" path="ember.db-shm" />
+        <include domain="file" path="datastore/ember_settings.preferences_pb" />
+    </cloud-backup>
+    <device-transfer>
+        <include domain="database" path="ember.db" />
+        <include domain="database" path="ember.db-wal" />
+        <include domain="database" path="ember.db-shm" />
+        <include domain="file" path="datastore/ember_settings.preferences_pb" />
+    </device-transfer>
+</data-extraction-rules>

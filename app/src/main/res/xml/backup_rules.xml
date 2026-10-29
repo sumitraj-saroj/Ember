@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <include domain="database" path="ember.db" />
+    <include domain="database" path="ember.db-wal" />
+    <include domain="database" path="ember.db-shm" />
+    <include domain="file" path="datastore/ember_settings.preferences_pb" />
+</full-backup-content>
