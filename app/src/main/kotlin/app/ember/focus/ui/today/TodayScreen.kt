@@ -16,14 +16,22 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import app.ember.focus.ui.common.BottomFadeScrim
+import app.ember.focus.ui.common.DurationText
+import app.ember.focus.ui.common.TopFadeScrim
+import app.ember.focus.ui.theme.TrackInactive
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -35,6 +43,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Settings
@@ -91,6 +100,7 @@ import java.time.format.DateTimeFormatter
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodayScreen(
+    onNavigateToStartSession: () -> Unit,
     onNavigateToFocus: () -> Unit,
     onNavigateToStats: () -> Unit,
     onNavigateToSettings: () -> Unit,
@@ -102,7 +112,6 @@ fun TodayScreen(
     val recentTasks by viewModel.recentTasks.collectAsState()
     val categories by viewModel.categories.collectAsState()
     val settings by viewModel.settings.collectAsState()
-    val showStartSheet by viewModel.showStartSheet.collectAsState()
     val selectedDetailSession by viewModel.selectedDetailSession.collectAsState()
 
     val context = LocalContext.current
@@ -140,6 +149,9 @@ fun TodayScreen(
         }
     }
 
+    val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val navBarHeight = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -148,14 +160,17 @@ fun TodayScreen(
                     colors = listOf(BackgroundTop, BackgroundBottom)
                 )
             )
-            .safeDrawingPadding()
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            // TOP BAR: Branding on left, Quick Actions on right
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = statusBarHeight + 8.dp)
+        ) {
+            // T1: TOP BAR: Branding on left (tracked Eyebrow), Quick Actions on right (44dp circles, spaced by 8dp)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 8.dp),
+                    .padding(horizontal = 20.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -169,10 +184,7 @@ fun TodayScreen(
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = "EMBER",
-                        style = Typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = AmberAccent,
-                        letterSpacing = 2.sp
+                        style = EmberTheme.typography.eyebrow
                     )
                 }
 
@@ -183,7 +195,7 @@ fun TodayScreen(
                     IconButton(
                         onClick = onNavigateToStats,
                         modifier = Modifier
-                            .size(38.dp)
+                            .size(44.dp)
                             .clip(CircleShape)
                             .background(SecondaryPillFill)
                     ) {
@@ -199,7 +211,7 @@ fun TodayScreen(
                         IconButton(
                             onClick = onNavigateToCandleLab,
                             modifier = Modifier
-                                .size(38.dp)
+                                .size(44.dp)
                                 .clip(CircleShape)
                                 .background(SecondaryPillFill)
                         ) {
@@ -215,7 +227,7 @@ fun TodayScreen(
                     IconButton(
                         onClick = onNavigateToSettings,
                         modifier = Modifier
-                            .size(38.dp)
+                            .size(44.dp)
                             .clip(CircleShape)
                             .background(SecondaryPillFill)
                     ) {
@@ -229,7 +241,7 @@ fun TodayScreen(
                 }
             }
 
-            // DATE SELECTOR PILL (Centered, spacious)
+            // T2: DATE SELECTOR PILL (Centered, 40dp arrow targets, 30% alpha forward arrow when disabled)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -246,13 +258,13 @@ fun TodayScreen(
                 ) {
                     IconButton(
                         onClick = { viewModel.prevDay() },
-                        modifier = Modifier.size(34.dp)
+                        modifier = Modifier.size(40.dp)
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Previous day",
                             tint = TextCream,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(18.dp)
                         )
                     }
 
@@ -276,8 +288,7 @@ fun TodayScreen(
                     ) {
                         Text(
                             text = dateLabel,
-                            style = Typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
+                            style = EmberTheme.typography.button.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold),
                             color = TextCream
                         )
                         Spacer(modifier = Modifier.width(6.dp))
@@ -292,13 +303,13 @@ fun TodayScreen(
                     IconButton(
                         onClick = { viewModel.nextDay() },
                         enabled = !isToday,
-                        modifier = Modifier.size(34.dp)
+                        modifier = Modifier.size(40.dp)
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                             contentDescription = "Next day",
-                            tint = if (isToday) AshGray else TextCream,
-                            modifier = Modifier.size(16.dp)
+                            tint = if (isToday) TextCream.copy(alpha = 0.3f) else TextCream,
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
@@ -336,7 +347,7 @@ fun TodayScreen(
                             Column {
                                 Text(
                                     text = timerState.taskName.ifBlank { "Deep work" },
-                                    style = Typography.labelLarge,
+                                    style = EmberTheme.typography.listCardTitle,
                                     color = TextCream
                                 )
                                 val remaining = if (timerState.status == TimerStatus.OVERTIME) {
@@ -346,7 +357,7 @@ fun TodayScreen(
                                 }
                                 Text(
                                     text = "${timerState.status.name.lowercase().replaceFirstChar { it.uppercase() }} · $remaining",
-                                    style = Typography.bodySmall,
+                                    style = EmberTheme.typography.caption,
                                     color = AmberAccent
                                 )
                             }
@@ -369,11 +380,11 @@ fun TodayScreen(
                 }
             }
 
-            // TOTAL TIME & GOAL PROGRESS BANNER
+            // T3: TOTAL TIME & GOAL PROGRESS BANNER (DurationText + Streak chip without tracking)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 10.dp)
+                    .padding(horizontal = 24.dp, vertical = 8.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -381,31 +392,27 @@ fun TodayScreen(
                     verticalAlignment = Alignment.Bottom
                 ) {
                     Column {
-                        val hours = uiState.totalFocusedMinutes / 60
-                        val mins = uiState.totalFocusedMinutes % 60
-                        val totalString = if (hours > 0) "${hours}h ${mins}m" else "${mins}m"
-
-                        Text(
-                            text = totalString,
-                            style = Typography.displayLarge,
-                            fontWeight = FontWeight.ExtraLight,
-                            color = TextCream
-                        )
+                        DurationText(minutes = uiState.totalFocusedMinutes)
+                        Spacer(modifier = Modifier.height(2.dp))
                         val goalHours = uiState.dailyGoalMinutes / 60
                         Text(
                             text = "of ${goalHours}h goal",
-                            style = Typography.bodyMedium,
-                            color = TextMuted
+                            style = EmberTheme.typography.body.copy(fontSize = 15.sp, color = TextMuted)
                         )
                     }
 
-                    // Streak Badge
+                    // Streak Badge (G1: No letter spacing)
+                    val streakText = when (uiState.currentStreak) {
+                        0 -> "No streak yet"
+                        1 -> "1 day streak"
+                        else -> "${uiState.currentStreak} day streak"
+                    }
                     Row(
                         modifier = Modifier
                             .clip(RoundedCornerShape(16.dp))
                             .background(SecondaryPillFill)
                             .border(1.dp, SecondaryPillBorder, RoundedCornerShape(16.dp))
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
@@ -414,10 +421,10 @@ fun TodayScreen(
                             tint = AmberAccent,
                             modifier = Modifier.size(16.dp)
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "${uiState.currentStreak} day streak",
-                            style = Typography.labelMedium,
+                            text = streakText,
+                            style = EmberTheme.typography.button.copy(fontSize = 13.sp, fontWeight = FontWeight.Medium),
                             color = TextCream
                         )
                     }
@@ -425,34 +432,71 @@ fun TodayScreen(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Progress Bar toward daily goal
-                LinearProgressIndicator(
-                    progress = { animatedProgress },
+                // T4: Progress Bar 8dp tall, rounded, track #2A241F, amber fill + faint glow, checkmark icon at completion, no end dot
+                val isGoalReached = animatedProgress >= 1f
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(6.dp)
-                        .clip(RoundedCornerShape(3.dp)),
-                    color = AmberAccent,
-                    trackColor = SecondaryPillFill
-                )
+                        .height(8.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(TrackInactive)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(animatedProgress)
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(
+                                Brush.horizontalGradient(
+                                    colors = if (isGoalReached) {
+                                        listOf(AmberAccent, Color(0xFFFFD59E))
+                                    } else {
+                                        listOf(AmberAccent.copy(alpha = 0.85f), AmberAccent)
+                                    }
+                                )
+                            ),
+                        contentAlignment = Alignment.CenterEnd
+                    ) {
+                        if (isGoalReached) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                tint = Color(0xFF1A120C),
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .padding(end = 1.dp)
+                            )
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Small stats row: completed vs broken
+                // T5: Completed vs Broken on left, % of goal on right (both 13sp)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = "${uiState.completedCount} completed · ${uiState.brokenCount} broken",
-                        style = Typography.bodySmall,
-                        color = TextMuted
+                        style = EmberTheme.typography.caption.copy(fontSize = 13.sp, color = TextMuted)
                     )
-                    Text(
-                        text = "${(goalProgress * 100).toInt()}% completed",
-                        style = Typography.bodySmall,
-                        color = AmberAccent
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (isGoalReached) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = "Goal reached",
+                                tint = AmberAccent,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                        }
+                        Text(
+                            text = "${(goalProgress * 100).toInt()}% of goal",
+                            style = EmberTheme.typography.caption.copy(fontSize = 13.sp, color = AmberAccent)
+                        )
+                    }
                 }
             }
 
@@ -471,45 +515,63 @@ fun TodayScreen(
 
             // SESSION LIST OR EMPTY STATE
             if (uiState.sessions.isEmpty()) {
-                // Empty state with unlit candle
-                Box(
+                // T6: Empty state with unlit candle (flexible weight 1f, ~40% screen height, 20sp SemiBold title, 15sp subtitle, 24dp gap, full-width CTA)
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
                         .padding(horizontal = 24.dp),
-                    contentAlignment = Alignment.Center
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight(0.55f),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(220.dp)
-                                .padding(horizontal = 16.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CandleView(
-                                state = CandleState(
-                                    progress = 0f,
-                                    phase = CandlePhase.IDLE
-                                )
+                        CandleView(
+                            state = CandleState(
+                                progress = 0f,
+                                phase = CandlePhase.IDLE
+                            )
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "No candles lit yet",
+                        style = EmberTheme.typography.taskTitle.copy(fontSize = 20.sp, fontWeight = FontWeight.SemiBold),
+                        color = TextCream
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Light your first candle of the day.",
+                        style = EmberTheme.typography.body.copy(fontSize = 15.sp, color = TextMuted)
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .clip(RoundedCornerShape(28.dp))
+                            .background(PrimaryPillFill)
+                            .clickable { onNavigateToStartSession() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.LocalFireDepartment,
+                                contentDescription = null,
+                                tint = PrimaryPillText,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Light a candle",
+                                style = EmberTheme.typography.button,
+                                color = PrimaryPillText
                             )
                         }
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = "No candles lit yet",
-                            style = Typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextCream
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Light your first candle of the day.",
-                            style = Typography.bodyMedium,
-                            color = TextMuted
-                        )
                     }
                 }
             } else {
@@ -518,7 +580,7 @@ fun TodayScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f),
-                    contentPadding = PaddingValues(start = 20.dp, top = 8.dp, end = 20.dp, bottom = 100.dp),
+                    contentPadding = PaddingValues(start = 20.dp, top = 8.dp, end = 20.dp, bottom = 96.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     items(
@@ -536,55 +598,48 @@ fun TodayScreen(
             }
         }
 
-        // BOTTOM FLOATING "LIGHT A CANDLE" BUTTON
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
-                .padding(bottom = 20.dp)
-        ) {
+        // T6: When sessions exist, button pinned at the bottom with a fade behind it
+        if (uiState.sessions.isNotEmpty()) {
+            BottomFadeScrim(
+                modifier = Modifier.align(Alignment.BottomCenter),
+                extraHeight = 72.dp
+            )
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(32.dp))
-                    .background(PrimaryPillFill)
-                    .clickable { viewModel.openStartSheet() }
-                    .padding(horizontal = 28.dp, vertical = 16.dp),
-                contentAlignment = Alignment.Center
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 24.dp, vertical = 20.dp)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.LocalFireDepartment,
-                        contentDescription = null,
-                        tint = PrimaryPillText,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Light a candle",
-                        style = Typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = PrimaryPillText
-                    )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .clip(RoundedCornerShape(28.dp))
+                        .background(PrimaryPillFill)
+                        .clickable { onNavigateToStartSession() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.LocalFireDepartment,
+                            contentDescription = null,
+                            tint = PrimaryPillText,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Light a candle",
+                            style = EmberTheme.typography.button,
+                            color = PrimaryPillText
+                        )
+                    }
                 }
             }
         }
-    }
 
-    // Start Session Sheet
-    if (showStartSheet) {
-        StartSessionSheet(
-            recentTasks = recentTasks,
-            categories = categories,
-            defaultDurationMinutes = settings.defaultDurationMinutes,
-            onDismiss = { viewModel.dismissStartSheet() },
-            onAddCategory = { name, color -> viewModel.addCategory(name, color) },
-            onStartSession = { taskName, catId, goal, duration, planCount ->
-                viewModel.startSession(taskName, catId, goal, duration, planCount) {
-                    TimerService.startService(context)
-                    onNavigateToFocus()
-                }
-            }
-        )
+        // G3: Top fade scrim for smooth scroll under transparent status bar
+        TopFadeScrim(modifier = Modifier.align(Alignment.TopCenter))
     }
 
     // Session Detail / Edit Sheet

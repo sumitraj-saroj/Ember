@@ -224,12 +224,27 @@ class CategoryRepositoryImpl @Inject constructor(
         if (categoryDao.getCategoryCount() == 0) {
             val defaults = listOf(
                 CategoryEntity("cat_work", "Work", "#E8A15A", 0),
-                CategoryEntity("cat_study", "Study", "#E07A5F", 1),
-                CategoryEntity("cat_coding", "Coding", "#F4A261", 2),
-                CategoryEntity("cat_writing", "Writing", "#DDA15E", 3),
-                CategoryEntity("cat_reading", "Reading", "#8AB17D", 4)
+                CategoryEntity("cat_study", "Study", "#E07A6A", 1),
+                CategoryEntity("cat_coding", "Coding", "#78A9C7", 2),
+                CategoryEntity("cat_writing", "Writing", "#B38FD6", 3),
+                CategoryEntity("cat_reading", "Reading", "#8DBE8A", 4)
             )
             categoryDao.insertCategories(defaults)
+        } else {
+            // One-time color migration if still set to old seed values (G4)
+            val all = categoryDao.getAllCategoriesList()
+            all.forEach { cat ->
+                val newColor = when {
+                    cat.id == "cat_study" && cat.colorHex.equals("#E07A5F", ignoreCase = true) -> "#E07A6A"
+                    cat.id == "cat_coding" && cat.colorHex.equals("#F4A261", ignoreCase = true) -> "#78A9C7"
+                    cat.id == "cat_writing" && cat.colorHex.equals("#DDA15E", ignoreCase = true) -> "#B38FD6"
+                    cat.id == "cat_reading" && cat.colorHex.equals("#8AB17D", ignoreCase = true) -> "#8DBE8A"
+                    else -> null
+                }
+                if (newColor != null) {
+                    categoryDao.updateCategory(cat.copy(colorHex = newColor, updatedAt = System.currentTimeMillis()))
+                }
+            }
         }
     }
 }

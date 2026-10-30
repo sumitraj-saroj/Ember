@@ -81,6 +81,12 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun updateReminderDays(days: String) {
+        viewModelScope.launch {
+            settingsRepository.updateReminderDays(days)
+        }
+    }
+
     fun addCategory(name: String, colorHex: String) {
         viewModelScope.launch {
             val newCat = Category(

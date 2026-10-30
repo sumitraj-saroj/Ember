@@ -19,6 +19,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -104,6 +105,8 @@ data class EmberTypography(
     val timerColon: TextStyle,
     val taskTitle: TextStyle,
     val subtitle: TextStyle,
+    val eyebrow: TextStyle,
+    val fieldLabel: TextStyle,
     val topLabel: TextStyle,
     val statusLine: TextStyle,
     val button: TextStyle,
@@ -111,6 +114,10 @@ data class EmberTypography(
     val listCardTitle: TextStyle,
     val caption: TextStyle,
     val statsNumber: TextStyle,
+    val heroTotalNumber: TextStyle,
+    val heroTotalUnit: TextStyle,
+    val statCardValue: TextStyle,
+    val statCardUnit: TextStyle,
     val material: Typography
 )
 
@@ -150,12 +157,13 @@ fun getEmberTypography(preset: String = "MANROPE"): EmberTypography {
         fontFamily = ManropeFontFamily,
         fontWeight = FontWeight.Medium,
         fontSize = 14.sp,
-        lineHeight = 20.sp, // 1.4 line height
+        lineHeight = 20.sp,
         letterSpacing = 0.sp,
         color = TextMuted
     )
 
-    val topLabel = TextStyle(
+    // G1: Eyebrow — Manrope Bold 11sp, uppercase, tracking 2.5sp, amber (#E8A15A)
+    val eyebrow = TextStyle(
         fontFamily = ManropeFontFamily,
         fontWeight = FontWeight.Bold,
         fontSize = 11.sp,
@@ -164,12 +172,24 @@ fun getEmberTypography(preset: String = "MANROPE"): EmberTypography {
         color = AmberAccent
     )
 
+    // G1: FieldLabel — Manrope SemiBold 12sp, uppercase, tracking 1sp, muted (#8C8176)
+    val fieldLabel = TextStyle(
+        fontFamily = ManropeFontFamily,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
+        letterSpacing = 1.sp,
+        color = Color(0xFF8C8176)
+    )
+
+    val topLabel = eyebrow
+
     val statusLine = TextStyle(
         fontFamily = ManropeFontFamily,
         fontWeight = FontWeight.Medium,
         fontSize = 13.sp,
         lineHeight = 18.sp,
-        letterSpacing = 0.2.sp,
+        letterSpacing = 0.sp,
         color = TextMuted
     )
 
@@ -178,7 +198,7 @@ fun getEmberTypography(preset: String = "MANROPE"): EmberTypography {
         fontWeight = FontWeight.SemiBold,
         fontSize = 16.sp,
         lineHeight = 22.sp,
-        letterSpacing = 0.1.sp,
+        letterSpacing = 0.sp,
         color = TextCream
     )
 
@@ -187,7 +207,7 @@ fun getEmberTypography(preset: String = "MANROPE"): EmberTypography {
         fontWeight = FontWeight.Medium,
         fontSize = 15.sp,
         lineHeight = 22.sp,
-        letterSpacing = 0.15.sp,
+        letterSpacing = 0.sp,
         color = TextCream
     )
 
@@ -196,7 +216,7 @@ fun getEmberTypography(preset: String = "MANROPE"): EmberTypography {
         fontWeight = FontWeight.SemiBold,
         fontSize = 16.sp,
         lineHeight = 22.sp,
-        letterSpacing = (-0.1).sp,
+        letterSpacing = 0.sp,
         color = TextCream
     )
 
@@ -205,7 +225,7 @@ fun getEmberTypography(preset: String = "MANROPE"): EmberTypography {
         fontWeight = FontWeight.Medium,
         fontSize = 12.sp,
         lineHeight = 16.sp,
-        letterSpacing = 0.2.sp,
+        letterSpacing = 0.sp,
         color = TextMuted
     )
 
@@ -217,6 +237,45 @@ fun getEmberTypography(preset: String = "MANROPE"): EmberTypography {
         letterSpacing = (-1).sp,
         fontFeatureSettings = "tnum",
         color = TextCream
+    )
+
+    // G2: Hero Total styles
+    val heroTotalNumber = TextStyle(
+        fontFamily = displayFontFamily,
+        fontWeight = if (isFraunces) FontWeight.Light else FontWeight.ExtraLight,
+        fontSize = 64.sp,
+        lineHeight = 68.sp,
+        letterSpacing = (-1.5).sp,
+        fontFeatureSettings = "tnum",
+        color = TextCream
+    )
+
+    val heroTotalUnit = TextStyle(
+        fontFamily = ManropeFontFamily,
+        fontWeight = FontWeight.Medium,
+        fontSize = 22.sp,
+        lineHeight = 26.sp,
+        letterSpacing = 0.sp,
+        color = Color(0xFFB9AD9A)
+    )
+
+    val statCardValue = TextStyle(
+        fontFamily = displayFontFamily,
+        fontWeight = FontWeight.Light,
+        fontSize = 28.sp,
+        lineHeight = 32.sp,
+        letterSpacing = (-0.5).sp,
+        fontFeatureSettings = "tnum",
+        color = TextCream
+    )
+
+    val statCardUnit = TextStyle(
+        fontFamily = ManropeFontFamily,
+        fontWeight = FontWeight.Medium,
+        fontSize = 14.sp,
+        lineHeight = 18.sp,
+        letterSpacing = 0.sp,
+        color = Color(0xFFB9AD9A)
     )
 
     val materialTypography = Typography(
@@ -233,8 +292,8 @@ fun getEmberTypography(preset: String = "MANROPE"): EmberTypography {
         bodyMedium = body,
         bodySmall = caption,
         labelLarge = button.copy(fontSize = 14.sp),
-        labelMedium = topLabel,
-        labelSmall = caption.copy(fontSize = 11.sp, color = AmberAccent)
+        labelMedium = eyebrow,
+        labelSmall = fieldLabel
     )
 
     return EmberTypography(
@@ -242,13 +301,19 @@ fun getEmberTypography(preset: String = "MANROPE"): EmberTypography {
         timerColon = timerColon,
         taskTitle = taskTitle,
         subtitle = subtitle,
-        topLabel = topLabel,
+        eyebrow = eyebrow,
+        fieldLabel = fieldLabel,
+        topLabel = eyebrow,
         statusLine = statusLine,
         button = button,
         body = body,
         listCardTitle = listCardTitle,
         caption = caption,
         statsNumber = statsNumber,
+        heroTotalNumber = heroTotalNumber,
+        heroTotalUnit = heroTotalUnit,
+        statCardValue = statCardValue,
+        statCardUnit = statCardUnit,
         material = materialTypography
     )
 }

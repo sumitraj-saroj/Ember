@@ -74,11 +74,13 @@ class FakeSettingsRepository : SettingsRepository {
     override val settingsFlow: Flow<UserSettings> = _settings.asStateFlow()
     override suspend fun updateDailyGoalMinutes(minutes: Int) { _settings.value = _settings.value.copy(dailyGoalMinutes = minutes) }
     override suspend fun updateDefaultDurationMinutes(minutes: Int) { _settings.value = _settings.value.copy(defaultDurationMinutes = minutes) }
+    override suspend fun updateDefaultCategoryId(categoryId: String) { _settings.value = _settings.value.copy(defaultCategoryId = categoryId) }
     override suspend fun updateStrictMode(enabled: Boolean) { _settings.value = _settings.value.copy(strictModeEnabled = enabled) }
     override suspend fun updateAmbientSound(enabled: Boolean, volume: Float) { _settings.value = _settings.value.copy(ambientSoundEnabled = enabled, ambientSoundVolume = volume) }
     override suspend fun updateKeepScreenOn(enabled: Boolean) { _settings.value = _settings.value.copy(keepScreenOn = enabled) }
     override suspend fun updateBreakLengths(shortBreak: Int, longBreak: Int) { _settings.value = _settings.value.copy(shortBreakMinutes = shortBreak, longBreakMinutes = longBreak) }
     override suspend fun updateDailyReminder(enabled: Boolean, hour: Int, minute: Int) { _settings.value = _settings.value.copy(dailyReminderEnabled = enabled, dailyReminderHour = hour, dailyReminderMinute = minute) }
+    override suspend fun updateReminderDays(days: String) { _settings.value = _settings.value.copy(reminderDays = days) }
     override suspend fun setOnboardingCompleted(completed: Boolean) { _settings.value = _settings.value.copy(onboardingCompleted = completed) }
     override suspend fun updateFontPreset(preset: String) { _settings.value = _settings.value.copy(fontPreset = preset) }
 }

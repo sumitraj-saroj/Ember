@@ -184,6 +184,29 @@ class TodayViewModel @Inject constructor(
         onSessionStarted()
     }
 
+    fun startSessionAndPersistDefaults(
+        taskName: String,
+        categoryId: String,
+        goal: String?,
+        durationMinutes: Int,
+        plannedSessionCount: Int?,
+        onSessionStarted: () -> Unit
+    ) {
+        _showStartSheet.value = false
+        viewModelScope.launch {
+            settingsRepository.updateDefaultCategoryId(categoryId)
+            settingsRepository.updateDefaultDurationMinutes(durationMinutes)
+        }
+        timerEngine.startSession(
+            taskName = taskName,
+            categoryId = categoryId,
+            goal = goal,
+            durationMinutes = durationMinutes,
+            plannedSessionCount = plannedSessionCount
+        )
+        onSessionStarted()
+    }
+
     fun updateSession(session: Session) {
         viewModelScope.launch {
             sessionRepository.updateSession(session)

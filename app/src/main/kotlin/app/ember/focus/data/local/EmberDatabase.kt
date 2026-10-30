@@ -39,25 +39,25 @@ abstract class EmberDatabase : RoomDatabase() {
             CategoryEntity(
                 id = "cat_study",
                 name = "Study",
-                colorHex = "#E07A5F",
+                colorHex = "#E07A6A",
                 sortOrder = 1
             ),
             CategoryEntity(
                 id = "cat_coding",
                 name = "Coding",
-                colorHex = "#F4A261",
+                colorHex = "#78A9C7",
                 sortOrder = 2
             ),
             CategoryEntity(
                 id = "cat_writing",
                 name = "Writing",
-                colorHex = "#DDA15E",
+                colorHex = "#B38FD6",
                 sortOrder = 3
             ),
             CategoryEntity(
                 id = "cat_reading",
                 name = "Reading",
-                colorHex = "#8AB17D",
+                colorHex = "#8DBE8A",
                 sortOrder = 4
             )
         )
@@ -74,6 +74,16 @@ abstract class EmberDatabase : RoomDatabase() {
                     """.trimIndent()
                 )
             }
+        }
+
+        override fun onOpen(db: SupportSQLiteDatabase) {
+            super.onOpen(db)
+            // G4: One-time migration for default categories
+            // Updates default colors ONLY if they still equal their old seed values
+            db.execSQL("UPDATE categories SET colorHex = '#E07A6A' WHERE id = 'cat_study' AND colorHex = '#E07A5F'")
+            db.execSQL("UPDATE categories SET colorHex = '#78A9C7' WHERE id = 'cat_coding' AND colorHex = '#F4A261'")
+            db.execSQL("UPDATE categories SET colorHex = '#B38FD6' WHERE id = 'cat_writing' AND colorHex = '#DDA15E'")
+            db.execSQL("UPDATE categories SET colorHex = '#8DBE8A' WHERE id = 'cat_reading' AND colorHex = '#8AB17D'")
         }
     }
 }

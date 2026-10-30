@@ -33,8 +33,9 @@ import java.time.LocalDate
 
 data class DayStat(
     val date: LocalDate,
-    val dayOfWeekLabel: String, // "M", "T", "W"...
-    val minutes: Int
+    val dayOfWeekLabel: String, // "Mon", "Tue", "Wed"...
+    val minutes: Int,
+    val isToday: Boolean = false
 )
 
 @Composable
@@ -58,10 +59,14 @@ fun WeekBarChart(
             .pointerInput(dayStats) {
                 detectTapGestures { offset ->
                     val width = size.width
-                    val colWidth = width / 7f
-                    val idx = (offset.x / colWidth).toInt().coerceIn(0, 6)
-                    selectedIndex = if (selectedIndex == idx) -1 else idx
-                    onDaySelected(if (selectedIndex != -1 && selectedIndex < dayStats.size) dayStats[selectedIndex] else null)
+                    val gutterWidth = 56.dp.toPx()
+                    val barAreaWidth = width - gutterWidth
+                    if (offset.x <= barAreaWidth) {
+                        val colWidth = barAreaWidth / 7f
+                        val idx = (offset.x / colWidth).toInt().coerceIn(0, 6)
+                        selectedIndex = if (selectedIndex == idx) -1 else idx
+                        onDaySelected(if (selectedIndex != -1 && selectedIndex < dayStats.size) dayStats[selectedIndex] else null)
+                    }
                 }
             }
     ) {
@@ -69,38 +74,29 @@ fun WeekBarChart(
             val width = size.width
             val height = size.height
 
-            val bottomPadding = 32.dp.toPx()
+            val gutterWidth = 56.dp.toPx()
+            val barAreaWidth = width - gutterWidth
+
+            val bottomPadding = 30.dp.toPx()
             val topPadding = 24.dp.toPx()
             val chartHeight = height - bottomPadding - topPadding
 
-            val colWidth = width / 7f
-            val barWidth = colWidth * 0.48f
+            val colWidth = barAreaWidth / 7f
+            val barWidth = (colWidth * 0.44f).coerceAtLeast(12.dp.toPx())
 
-            // 1. Goal Dashed Line
+            // 1. Goal Dashed Line across the bar area at 40% alpha (BEHIND the bars)
             val goalY = topPadding + chartHeight * (1f - (dailyGoalMinutes / maxMinutes).coerceIn(0f, 1f))
             drawLine(
-                color = AmberAccent.copy(alpha = 0.5f),
+                color = AmberAccent.copy(alpha = 0.4f),
                 start = Offset(0f, goalY),
-                end = Offset(width, goalY),
+                end = Offset(barAreaWidth, goalY),
                 strokeWidth = 1.5.dp.toPx(),
-                pathEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 8f), 0f)
-            )
-
-            // Goal Label
-            val goalHours = dailyGoalMinutes / 60
-            drawContext.canvas.nativeCanvas.drawText(
-                "${goalHours}h goal",
-                width - 4.dp.toPx(),
-                goalY - 6.dp.toPx(),
-                android.graphics.Paint().apply {
-                    color = "#E8A15A".toColorInt()
-                    textSize = 10.dp.toPx()
-                    textAlign = android.graphics.Paint.Align.RIGHT
-                    isAntiAlias = true
-                }
+                pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 6f), 0f)
             )
 
             // 2. Bars for each day of the week
+            val hasAnyData = dayStats.any { it.minutes > 0 }
+
             dayStats.forEachIndexed { i, stat ->
                 val colCenterX = (i * colWidth) + (colWidth * 0.5f)
                 val barLeft = colCenterX - (barWidth * 0.5f)
@@ -118,13 +114,25 @@ fun WeekBarChart(
                     cornerRadius = CornerRadius(barWidth * 0.5f, barWidth * 0.5f)
                 )
 
+                if (stat.isToday) {
+                    // Today highlight ring around slot
+                    drawRoundRect(
+                        color = AmberAccent.copy(alpha = 0.35f),
+                        topLeft = Offset(barLeft - 1.dp.toPx(), topPadding - 1.dp.toPx()),
+                        size = Size(barWidth + 2.dp.toPx(), chartHeight + 2.dp.toPx()),
+                        cornerRadius = CornerRadius((barWidth + 2.dp.toPx()) * 0.5f, (barWidth + 2.dp.toPx()) * 0.5f),
+                        style = Stroke(width = 1.dp.toPx())
+                    )
+                }
+
                 // Actual focus time bar
                 if (stat.minutes > 0) {
                     val barBrush = Brush.verticalGradient(
-                        colors = listOf(
-                            Color(0xFFFFB74D),
-                            AmberAccent
-                        ),
+                        colors = if (stat.isToday) {
+                            listOf(Color(0xFFFFC078), AmberAccent)
+                        } else {
+                            listOf(Color(0xFFFFB74D), AmberAccent)
+                        },
                         startY = barTop,
                         endY = topPadding + chartHeight
                     )
@@ -145,42 +153,77 @@ fun WeekBarChart(
                             style = Stroke(width = 2.dp.toPx())
                         )
                     }
-                }
 
-                // Day Label below
-                drawContext.canvas.nativeCanvas.drawText(
-                    stat.dayOfWeekLabel,
-                    colCenterX,
-                    height - 10.dp.toPx(),
-                    android.graphics.Paint().apply {
-                        color = if (isSelected) "#F2E6D0".toColorInt() else "#8C8176".toColorInt()
-                        textSize = 12.dp.toPx()
-                        textAlign = android.graphics.Paint.Align.CENTER
-                        isFakeBoldText = isSelected
-                        isAntiAlias = true
-                    }
-                )
-
-                // Tooltip bubble on selected bar
-                if (isSelected && stat.minutes > 0) {
+                    // Value label above non-empty bar (ST2)
                     val h = stat.minutes / 60
                     val m = stat.minutes % 60
-                    val text = if (h > 0) "${h}h ${m}m" else "${m}m"
+                    val valText = if (h > 0 && m > 0) "${h}h${m}m" else if (h > 0) "${h}h" else "${m}m"
 
                     drawContext.canvas.nativeCanvas.drawText(
-                        text,
+                        valText,
                         colCenterX,
-                        (barTop - 8.dp.toPx()).coerceAtLeast(14.dp.toPx()),
+                        (barTop - 5.dp.toPx()).coerceAtLeast(13.dp.toPx()),
                         android.graphics.Paint().apply {
-                            color = "#F2E6D0".toColorInt()
-                            textSize = 11.dp.toPx()
+                            color = if (stat.isToday || isSelected) "#F2E6D0".toColorInt() else "#B9AD9A".toColorInt()
+                            textSize = 10.dp.toPx()
                             textAlign = android.graphics.Paint.Align.CENTER
-                            isFakeBoldText = true
                             isAntiAlias = true
                         }
                     )
                 }
+
+                // Day Label below (ST2: Mon Tue Wed Thu Fri Sat Sun, 11sp, highlight today in amber)
+                val labelColor = when {
+                    stat.isToday -> "#E8A15A".toColorInt()
+                    isSelected -> "#F2E6D0".toColorInt()
+                    else -> "#8C8176".toColorInt()
+                }
+
+                drawContext.canvas.nativeCanvas.drawText(
+                    stat.dayOfWeekLabel,
+                    colCenterX,
+                    height - 8.dp.toPx(),
+                    android.graphics.Paint().apply {
+                        color = labelColor
+                        textSize = 11.dp.toPx()
+                        textAlign = android.graphics.Paint.Align.CENTER
+                        isFakeBoldText = stat.isToday || isSelected
+                        isAntiAlias = true
+                    }
+                )
             }
+
+            // Empty state caption (ST3)
+            if (!hasAnyData) {
+                drawContext.canvas.nativeCanvas.drawText(
+                    "No candles this week",
+                    barAreaWidth * 0.5f,
+                    topPadding + (chartHeight * 0.5f) + 4.dp.toPx(),
+                    android.graphics.Paint().apply {
+                        color = "#8C8176".toColorInt()
+                        textSize = 13.dp.toPx()
+                        textAlign = android.graphics.Paint.Align.CENTER
+                        isAntiAlias = true
+                    }
+                )
+            }
+
+            // 3. Goal Label LAST inside gutter, right-aligned, 11sp Medium amber (ST1)
+            val goalHours = dailyGoalMinutes / 60
+            val goalMins = dailyGoalMinutes % 60
+            val goalText = if (goalMins == 0) "${goalHours}h goal" else "${goalHours}h${goalMins}m goal"
+
+            drawContext.canvas.nativeCanvas.drawText(
+                goalText,
+                width - 2.dp.toPx(),
+                goalY + 4.dp.toPx(),
+                android.graphics.Paint().apply {
+                    color = "#E8A15A".toColorInt()
+                    textSize = 11.dp.toPx()
+                    textAlign = android.graphics.Paint.Align.RIGHT
+                    isAntiAlias = true
+                }
+            )
         }
     }
 }
@@ -234,8 +277,8 @@ fun MonthHeatmap(
             val cellPadding = 3.dp.toPx()
             val cellSize = (minOf(colWidth, rowHeight) - cellPadding * 2f).coerceAtLeast(10f)
 
-            // Day of week headers: M T W T F S S
-            val headers = listOf("M", "T", "W", "T", "F", "S", "S")
+            // Day of week headers: Mon Tue Wed Thu Fri Sat Sun
+            val headers = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
             headers.forEachIndexed { i, h ->
                 val x = (i * colWidth) + (colWidth * 0.5f)
                 drawContext.canvas.nativeCanvas.drawText(
@@ -290,6 +333,14 @@ fun MonthHeatmap(
                         cornerRadius = CornerRadius(6.dp.toPx(), 6.dp.toPx()),
                         style = Stroke(width = 2.dp.toPx())
                     )
+                } else if (stat.isToday) {
+                    drawRoundRect(
+                        color = AmberAccent,
+                        topLeft = Offset(x, y),
+                        size = Size(cellSize, cellSize),
+                        cornerRadius = CornerRadius(6.dp.toPx(), 6.dp.toPx()),
+                        style = Stroke(width = 1.5.dp.toPx())
+                    )
                 } else if (stat.minutes == 0) {
                     drawRoundRect(
                         color = SecondaryPillBorder,
@@ -303,6 +354,8 @@ fun MonthHeatmap(
                 // Day number text
                 val textColor = if (stat.minutes >= dailyGoalMinutes) {
                     "#1A120C".toColorInt()
+                } else if (stat.isToday) {
+                    "#E8A15A".toColorInt()
                 } else {
                     "#F2E6D0".toColorInt()
                 }

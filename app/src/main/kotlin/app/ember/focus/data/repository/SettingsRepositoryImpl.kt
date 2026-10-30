@@ -27,6 +27,7 @@ class SettingsRepositoryImpl @Inject constructor(
     private object PreferencesKeys {
         val DAILY_GOAL_MINUTES = intPreferencesKey("daily_goal_minutes")
         val DEFAULT_DURATION_MINUTES = intPreferencesKey("default_duration_minutes")
+        val DEFAULT_CATEGORY_ID = stringPreferencesKey("default_category_id")
         val STRICT_MODE_ENABLED = booleanPreferencesKey("strict_mode_enabled")
         val AMBIENT_SOUND_ENABLED = booleanPreferencesKey("ambient_sound_enabled")
         val AMBIENT_SOUND_VOLUME = floatPreferencesKey("ambient_sound_volume")
@@ -36,6 +37,7 @@ class SettingsRepositoryImpl @Inject constructor(
         val DAILY_REMINDER_ENABLED = booleanPreferencesKey("daily_reminder_enabled")
         val DAILY_REMINDER_HOUR = intPreferencesKey("daily_reminder_hour")
         val DAILY_REMINDER_MINUTE = intPreferencesKey("daily_reminder_minute")
+        val REMINDER_DAYS = stringPreferencesKey("reminder_days")
         val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
         val FONT_PRESET = stringPreferencesKey("font_preset")
     }
@@ -44,6 +46,7 @@ class SettingsRepositoryImpl @Inject constructor(
         UserSettings(
             dailyGoalMinutes = prefs[PreferencesKeys.DAILY_GOAL_MINUTES] ?: 240,
             defaultDurationMinutes = prefs[PreferencesKeys.DEFAULT_DURATION_MINUTES] ?: 25,
+            defaultCategoryId = prefs[PreferencesKeys.DEFAULT_CATEGORY_ID] ?: "cat_work",
             strictModeEnabled = prefs[PreferencesKeys.STRICT_MODE_ENABLED] ?: true,
             ambientSoundEnabled = prefs[PreferencesKeys.AMBIENT_SOUND_ENABLED] ?: true,
             ambientSoundVolume = prefs[PreferencesKeys.AMBIENT_SOUND_VOLUME] ?: 0.5f,
@@ -53,6 +56,7 @@ class SettingsRepositoryImpl @Inject constructor(
             dailyReminderEnabled = prefs[PreferencesKeys.DAILY_REMINDER_ENABLED] ?: false,
             dailyReminderHour = prefs[PreferencesKeys.DAILY_REMINDER_HOUR] ?: 9,
             dailyReminderMinute = prefs[PreferencesKeys.DAILY_REMINDER_MINUTE] ?: 0,
+            reminderDays = prefs[PreferencesKeys.REMINDER_DAYS] ?: "1,2,3,4,5,6,7",
             onboardingCompleted = prefs[PreferencesKeys.ONBOARDING_COMPLETED] ?: false,
             fontPreset = prefs[PreferencesKeys.FONT_PRESET] ?: "MANROPE"
         )
@@ -64,6 +68,10 @@ class SettingsRepositoryImpl @Inject constructor(
 
     override suspend fun updateDefaultDurationMinutes(minutes: Int) {
         context.dataStore.edit { it[PreferencesKeys.DEFAULT_DURATION_MINUTES] = minutes }
+    }
+
+    override suspend fun updateDefaultCategoryId(categoryId: String) {
+        context.dataStore.edit { it[PreferencesKeys.DEFAULT_CATEGORY_ID] = categoryId }
     }
 
     override suspend fun updateStrictMode(enabled: Boolean) {
@@ -94,6 +102,10 @@ class SettingsRepositoryImpl @Inject constructor(
             it[PreferencesKeys.DAILY_REMINDER_HOUR] = hour
             it[PreferencesKeys.DAILY_REMINDER_MINUTE] = minute
         }
+    }
+
+    override suspend fun updateReminderDays(days: String) {
+        context.dataStore.edit { it[PreferencesKeys.REMINDER_DAYS] = days }
     }
 
     override suspend fun setOnboardingCompleted(completed: Boolean) {

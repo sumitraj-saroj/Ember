@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import app.ember.focus.ui.theme.AmberAccent
 import app.ember.focus.ui.theme.BackgroundBottom
 import app.ember.focus.ui.theme.BackgroundTop
+import app.ember.focus.ui.theme.EmberTheme
 import app.ember.focus.ui.theme.SecondaryPillBorder
 import app.ember.focus.ui.theme.SecondaryPillFill
 import app.ember.focus.ui.theme.SecondaryPillText
@@ -100,19 +101,19 @@ fun BreakScreen(
         ) {
             Text(
                 text = "TAKE A BREATH",
-                style = Typography.labelMedium,
+                style = EmberTheme.typography.eyebrow,
                 color = AmberAccent
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = if (durationMinutes > 5) "Extended Break" else "Take Five",
-                style = Typography.headlineMedium,
+                style = EmberTheme.typography.taskTitle,
                 color = TextCream
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = "Rest your eyes, hydrate, and stretch",
-                style = Typography.bodyMedium,
+                style = EmberTheme.typography.body,
                 color = TextMuted
             )
         }
@@ -175,7 +176,7 @@ fun BreakScreen(
         ) {
             Text(
                 text = "Skip break",
-                style = Typography.labelLarge,
+                style = EmberTheme.typography.button,
                 color = SecondaryPillText
             )
         }

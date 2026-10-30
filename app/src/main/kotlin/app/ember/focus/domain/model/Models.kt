@@ -44,6 +44,7 @@ data class Category(
 data class UserSettings(
     val dailyGoalMinutes: Int = 240, // 4 hours
     val defaultDurationMinutes: Int = 25,
+    val defaultCategoryId: String = "cat_work",
     val strictModeEnabled: Boolean = true,
     val ambientSoundEnabled: Boolean = true,
     val ambientSoundVolume: Float = 0.5f,
@@ -53,6 +54,7 @@ data class UserSettings(
     val dailyReminderEnabled: Boolean = false,
     val dailyReminderHour: Int = 9,
     val dailyReminderMinute: Int = 0,
+    val reminderDays: String = "1,2,3,4,5,6,7",
     val onboardingCompleted: Boolean = false,
     val fontPreset: String = "MANROPE" // "MANROPE" or "FRAUNCES"
 )

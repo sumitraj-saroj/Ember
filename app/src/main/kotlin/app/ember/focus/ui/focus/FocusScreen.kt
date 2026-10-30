@@ -175,7 +175,7 @@ fun FocusScreen(
                 // Top label in small caps (app name)
                 Text(
                     text = "EMBER",
-                    style = EmberTheme.typography.topLabel,
+                    style = EmberTheme.typography.eyebrow,
                     color = AmberAccent,
                     textAlign = TextAlign.Center
                 )

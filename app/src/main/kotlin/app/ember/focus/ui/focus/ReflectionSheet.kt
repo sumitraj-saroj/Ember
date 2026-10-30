@@ -79,13 +79,13 @@ fun ReflectionSheet(
         ) {
             Text(
                 text = "SESSION REFLECTION",
-                style = Typography.labelSmall,
+                style = EmberTheme.typography.eyebrow,
                 color = AmberAccent
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = "How was your focus?",
-                style = Typography.headlineSmall,
+                style = EmberTheme.typography.taskTitle,
                 color = TextCream
             )
 
@@ -127,12 +127,12 @@ fun ReflectionSheet(
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
                     text = "Did you hit your goal?",
-                    style = Typography.titleMedium,
+                    style = EmberTheme.typography.listCardTitle,
                     color = TextCream
                 )
                 Text(
                     text = "\"$goal\"",
-                    style = Typography.bodySmall,
+                    style = EmberTheme.typography.caption,
                     color = TextMuted
                 )
                 Spacer(modifier = Modifier.height(10.dp))
@@ -191,7 +191,7 @@ fun ReflectionSheet(
                 ) {
                     Text(
                         text = "Skip",
-                        style = Typography.labelLarge,
+                        style = EmberTheme.typography.button,
                         color = SecondaryPillText
                     )
                 }
@@ -211,7 +211,7 @@ fun ReflectionSheet(
                 ) {
                     Text(
                         text = "Save reflection",
-                        style = Typography.labelLarge,
+                        style = EmberTheme.typography.button,
                         color = PrimaryPillText
                     )
                 }

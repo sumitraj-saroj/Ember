@@ -22,6 +22,7 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -158,72 +159,102 @@ fun CandleView(
                 }
             }
 
-            val glowRadius = if (flameScale > 0.05f) {
-                val base = if (state.phase == CandlePhase.PAUSED) 80f else 240f
-                (base * flameScale * (1f + flicker * 0.12f)).coerceAtLeast(10f)
-            } else 0f
-
+            val glowRadius = candleWidth * 2.2f * flameScale * (1f + flicker * 0.08f)
             val flameBaseY = candleTopY + (waxPoolHeight * 0.35f) - 22f
 
-            // 1. BACKGROUND WARM RADIAL GLOW
-            if (glowRadius > 0f) {
-                val glowAlpha = when (state.phase) {
-                    CandlePhase.PAUSED -> 0.18f
-                    else -> (0.42f + flicker * 0.06f).coerceIn(0.2f, 0.55f)
-                }
+            // 1. BACKGROUND WARM RADIAL GLOW (C4: BlendMode.Plus, 6+ stops)
+            if (glowRadius > 10f && flameScale > 0.02f) {
+                val glowAlpha = (0.35f + flicker * 0.05f).coerceIn(0.15f, 0.45f) * flameScale
                 drawCircle(
                     brush = Brush.radialGradient(
-                        colors = listOf(
-                            Color(0xFFFF9800).copy(alpha = glowAlpha),
-                            Color(0xFFE65100).copy(alpha = glowAlpha * 0.5f),
-                            Color(0x00000000)
+                        colorStops = arrayOf(
+                            0.0f to Color(0xFFFF9A3C).copy(alpha = glowAlpha),
+                            0.2f to Color(0xFFFF8F1F).copy(alpha = glowAlpha * 0.75f),
+                            0.4f to Color(0xFFF57C00).copy(alpha = glowAlpha * 0.45f),
+                            0.6f to Color(0xFFE65100).copy(alpha = glowAlpha * 0.22f),
+                            0.8f to Color(0xFFBF360C).copy(alpha = glowAlpha * 0.08f),
+                            1.0f to Color(0x00000000)
                         ),
                         center = Offset(centerX, flameBaseY - 20f),
-                        radius = glowRadius * 1.6f
+                        radius = glowRadius
                     ),
                     center = Offset(centerX, flameBaseY - 20f),
-                    radius = glowRadius * 1.6f
+                    radius = glowRadius,
+                    blendMode = BlendMode.Plus
                 )
             }
 
-            // 2. WOODEN TABLE SURFACE
-            val tableTop = dishCenterY + (dishRadiusY * 0.3f)
-            val tableHeight = height - tableTop
-            if (tableHeight > 0f) {
+            // 2. SURFACE / TABLE FLOOR (C5: No hard edges, full-width gradient + vignette + light pool)
+            val floorTop = dishCenterY - (dishRadiusY * 0.5f)
+            val floorHeight = height - floorTop
+            if (floorHeight > 0f) {
+                // Vertical floor gradient: transparent (above dish) -> #17110C -> #0D0906
                 drawRect(
                     brush = Brush.verticalGradient(
-                        colors = listOf(TableWoodTop, TableWoodBottom),
-                        startY = tableTop,
+                        colorStops = arrayOf(
+                            0.0f to Color.Transparent,
+                            0.25f to Color(0xFF17110C),
+                            1.0f to Color(0xFF0D0906)
+                        ),
+                        startY = floorTop,
                         endY = height
                     ),
-                    topLeft = Offset(0f, tableTop),
-                    size = Size(width, tableHeight)
+                    topLeft = Offset(0f, floorTop),
+                    size = Size(width, floorHeight)
                 )
 
-                // Subtle warm reflection of candle light onto table
-                if (glowRadius > 0f) {
+                // Horizontal vignette so it fades softly at left and right edges
+                drawRect(
+                    brush = Brush.horizontalGradient(
+                        colorStops = arrayOf(
+                            0.0f to Color(0x990A0705),
+                            0.2f to Color.Transparent,
+                            0.8f to Color.Transparent,
+                            1.0f to Color(0x990A0705)
+                        ),
+                        startX = 0f,
+                        endX = width
+                    ),
+                    topLeft = Offset(0f, floorTop),
+                    size = Size(width, floorHeight)
+                )
+
+                // Soft contact-shadow ellipse under the brass dish
+                drawOval(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            Color(0x99000000),
+                            Color(0x44000000),
+                            Color(0x00000000)
+                        ),
+                        center = Offset(centerX, dishCenterY + 4f),
+                        radius = dishRadiusX * 1.3f
+                    ),
+                    topLeft = Offset(centerX - dishRadiusX * 1.3f, dishCenterY - dishRadiusY * 0.4f),
+                    size = Size(dishRadiusX * 2.6f, dishRadiusY * 2.2f)
+                )
+
+                // Warm elliptical light pool on the surface whose alpha follows flame intensity
+                if (flameScale > 0.05f) {
+                    val lightPoolAlpha = (0.16f * flameScale * (1f + flicker * 0.08f)).coerceIn(0f, 0.25f)
                     drawOval(
                         brush = Brush.radialGradient(
                             colors = listOf(
-                                Color(0xFFFF9800).copy(alpha = 0.12f * flameScale),
+                                Color(0xFFFF9A3C).copy(alpha = lightPoolAlpha),
+                                Color(0xFFE65100).copy(alpha = lightPoolAlpha * 0.4f),
                                 Color(0x00000000)
                             ),
-                            center = Offset(centerX, tableTop + 15f),
-                            radius = dishRadiusX * 1.8f
+                            center = Offset(centerX, dishCenterY + (dishRadiusY * 0.4f)),
+                            radius = dishRadiusX * 2.0f
                         ),
-                        topLeft = Offset(centerX - dishRadiusX * 1.8f, tableTop),
-                        size = Size(dishRadiusX * 3.6f, dishRadiusY * 1.5f)
+                        topLeft = Offset(centerX - dishRadiusX * 2.0f, dishCenterY - dishRadiusY * 0.5f),
+                        size = Size(dishRadiusX * 4.0f, dishRadiusY * 2.2f),
+                        blendMode = BlendMode.Plus
                     )
                 }
             }
 
-            // 3. BRASS DISH
-            // Dish outer rim shadow
-            drawOval(
-                color = Color(0x77000000),
-                topLeft = Offset(centerX - dishRadiusX - 4f, dishCenterY - dishRadiusY + 8f),
-                size = Size((dishRadiusX + 4f) * 2f, dishRadiusY * 2f)
-            )
+            // 3. BRASS DISH (C6)
             // Dish metallic body
             drawOval(
                 brush = Brush.radialGradient(
@@ -251,6 +282,12 @@ fun CandleView(
                 topLeft = Offset(centerX - dishRadiusX * 0.75f, dishCenterY - dishRadiusY * 0.72f),
                 size = Size(dishRadiusX * 1.5f, dishRadiusY * 1.44f)
             )
+            // Soft shadow under candle base (replacing the grey ring)
+            drawOval(
+                color = Color(0x662A1F14),
+                topLeft = Offset(centerX - candleWidth * 0.55f, candleBaseY - 3f),
+                size = Size(candleWidth * 1.1f, waxPoolHeight * 0.6f)
+            )
 
             // 4. MELTED WAX PUDDLE AT BASE
             val puddleRadiusX = candleWidth * (0.6f + smoothProgress * 0.45f)
@@ -260,9 +297,9 @@ fun CandleView(
             drawOval(
                 brush = Brush.radialGradient(
                     colors = listOf(
-                        WaxIvory.copy(alpha = 0.9f),
-                        WaxShadow,
-                        Color(0xFF7A6F62)
+                        Color(0xFFFAF5EC).copy(alpha = 0.9f),
+                        Color(0xFFE8DAC3),
+                        Color(0xFFBFAE8E)
                     ),
                     center = Offset(centerX, candleBaseY),
                     radius = puddleRadiusX
@@ -271,10 +308,11 @@ fun CandleView(
                 size = Size(puddleRadiusX * 2f, puddleRadiusY * 2f)
             )
 
-            // 5. CANDLE WAX CYLINDER BODY
+            // 5. CANDLE WAX CYLINDER BODY (Warm opaque tones only, C1)
             val isBroken = state.phase == CandlePhase.BROKEN
-            val bodyColorCenter = if (isBroken) WaxDarkCool else WaxIvory
-            val bodyColorShadow = if (isBroken) Color(0xFF554E48) else WaxShadow
+            val edgeColor = if (isBroken) Color(0xFF7A7067) else Color(0xFFBFAE8E)
+            val midColor = if (isBroken) Color(0xFF9E948A) else Color(0xFFEFE3CB)
+            val highlightColor = if (isBroken) Color(0xFFB8ADA3) else Color(0xFFFBF4E4)
 
             candleBodyPath.reset()
             candleBodyPath.moveTo(candleLeft, candleTopY + (waxPoolHeight * 0.5f))
@@ -283,21 +321,55 @@ fun CandleView(
             candleBodyPath.lineTo(candleLeft, candleBaseY)
             candleBodyPath.close()
 
-            // Vertical linear shading across cylinder: shadow -> highlight -> shadow
+            // Horizontal cylinder shading: edge #BFAE8E -> mid #EFE3CB -> highlight #FBF4E4 at ~35% -> mid -> edge
             drawPath(
                 path = candleBodyPath,
                 brush = Brush.horizontalGradient(
                     colorStops = arrayOf(
-                        0.0f to bodyColorShadow,
-                        0.25f to bodyColorCenter,
-                        0.55f to Color(0xFFFFFFFF).copy(alpha = if (isBroken) 0.3f else 0.7f),
-                        0.75f to bodyColorCenter,
-                        1.0f to bodyColorShadow
+                        0.0f to edgeColor,
+                        0.18f to midColor,
+                        0.35f to highlightColor,
+                        0.68f to midColor,
+                        1.0f to edgeColor
                     ),
                     startX = candleLeft,
                     endX = candleRight
                 )
             )
+
+            // Bottom ambient occlusion #8F7F63 at 25% alpha
+            val aoHeight = currentCandleHeight * 0.25f
+            drawRect(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color.Transparent,
+                        Color(0xFF8F7F63).copy(alpha = 0.25f)
+                    ),
+                    startY = candleBaseY - aoHeight,
+                    endY = candleBaseY
+                ),
+                topLeft = Offset(candleLeft, candleBaseY - aoHeight),
+                size = Size(candleWidth, aoHeight)
+            )
+
+            // Top amber glow overlay on top 30% of body when burning
+            if (flameScale > 0.05f) {
+                val glowOverlayHeight = currentCandleHeight * 0.30f
+                val glowOverlayAlpha = (0.35f * flameScale * (1f + flicker * 0.08f)).coerceIn(0f, 0.45f)
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFFFF9A3C).copy(alpha = glowOverlayAlpha),
+                            Color(0x00000000)
+                        ),
+                        startY = candleTopY + (waxPoolHeight * 0.5f),
+                        endY = candleTopY + (waxPoolHeight * 0.5f) + glowOverlayHeight
+                    ),
+                    topLeft = Offset(candleLeft, candleTopY + (waxPoolHeight * 0.5f)),
+                    size = Size(candleWidth, glowOverlayHeight),
+                    blendMode = BlendMode.Plus
+                )
+            }
 
             // 6. PROCEDURAL WAX DRIPS DOWN SIDES
             drips.forEach { drip ->
@@ -311,7 +383,7 @@ fun CandleView(
                     if (dripEndY > dripStartY) {
                         // Drip trail
                         drawLine(
-                            color = bodyColorCenter,
+                            color = midColor,
                             start = Offset(dripX, dripStartY),
                             end = Offset(dripX, dripEndY),
                             strokeWidth = drip.widthDp * density,
@@ -319,7 +391,7 @@ fun CandleView(
                         )
                         // Droplet bead at bottom
                         drawCircle(
-                            color = bodyColorShadow,
+                            color = edgeColor,
                             center = Offset(dripX, dripEndY),
                             radius = (drip.widthDp * density * 0.7f)
                         )
@@ -327,41 +399,38 @@ fun CandleView(
                 }
             }
 
-            // 7. TOP WAX POOL (Elliptical depression)
-            // Outer rim
-            drawOval(
-                brush = Brush.horizontalGradient(
-                    colors = listOf(bodyColorShadow, bodyColorCenter, bodyColorShadow),
-                    startX = candleLeft,
-                    endX = candleRight
-                ),
-                topLeft = Offset(candleLeft, candleTopY),
-                size = Size(candleWidth, waxPoolHeight)
-            )
-            // Melted liquid depression
-            val poolDepressionDepth = (waxPoolHeight * (0.6f + smoothProgress * 0.3f)).coerceAtMost(waxPoolHeight * 0.95f)
-            val poolInnerWidth = candleWidth * 0.88f
-            drawOval(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        Color(0xFFE2D6C3),
-                        Color(0xFFB5A691),
-                        bodyColorShadow
-                    ),
-                    center = Offset(centerX, candleTopY + (waxPoolHeight * 0.5f)),
-                    radius = poolInnerWidth * 0.5f
-                ),
-                topLeft = Offset(centerX - poolInnerWidth * 0.5f, candleTopY + (waxPoolHeight * 0.5f) - (poolDepressionDepth * 0.5f)),
-                size = Size(poolInnerWidth, poolDepressionDepth)
-            )
+            // 7. TOP WAX SURFACE (C2: No glass rim)
+            val isBurning = flameScale > 0.05f || state.phase == CandlePhase.BURNING || state.phase == CandlePhase.OVERTIME
 
-            // Specular gloss reflection on rim
-            drawOval(
-                color = Color.White.copy(alpha = if (isBroken) 0.1f else 0.45f),
-                topLeft = Offset(centerX - candleWidth * 0.35f, candleTopY + 1f),
-                size = Size(candleWidth * 0.7f, waxPoolHeight * 0.25f),
-                style = Stroke(width = 1.5f)
-            )
+            if (!isBurning) {
+                // Idle: flat ivory ellipse (slightly lighter than body) with wick
+                drawOval(
+                    color = Color(0xFFFAF5EC),
+                    topLeft = Offset(candleLeft, candleTopY),
+                    size = Size(candleWidth, waxPoolHeight)
+                )
+            } else {
+                // Burning: a glossy translucent melted-wax pool (amber-tinted)
+                drawOval(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            Color(0xFFFFF3E0),
+                            Color(0xFFF3DEC4),
+                            Color(0xFFDEBA8E)
+                        ),
+                        center = Offset(centerX, candleTopY + (waxPoolHeight * 0.5f)),
+                        radius = candleWidth * 0.48f
+                    ),
+                    topLeft = Offset(candleLeft, candleTopY),
+                    size = Size(candleWidth, waxPoolHeight)
+                )
+                // Small specular highlight inside the liquid pool
+                drawOval(
+                    color = Color(0x66FFFFFF),
+                    topLeft = Offset(centerX - candleWidth * 0.22f, candleTopY + waxPoolHeight * 0.18f),
+                    size = Size(candleWidth * 0.44f, waxPoolHeight * 0.22f)
+                )
+            }
 
             // 8. WICK
             val wickBaseX = centerX
@@ -389,42 +458,42 @@ fun CandleView(
                 )
             }
 
-            // 9. THE FLAME (Layers: Blue Base -> Outer Orange Mantle -> Inner Yellow Heart -> Bright Core)
+            // 9. THE FLAME (C3: Height ~1.2x candleWidth, width ~0.4x candleWidth, with visible layers)
             if (flameScale > 0.02f) {
-                val flameHeight = 62f * flameScale * (1f + flicker * 0.06f)
-                val flameWidth = 26f * flameScale * (1f - flicker * 0.04f)
-                val swayX = flicker * 3.8f * flameScale
+                val flameHeight = candleWidth * 1.2f * flameScale * (1f + flicker * 0.06f)
+                val flameWidth = candleWidth * 0.4f * flameScale * (1f - flicker * 0.04f)
+                val swayX = flicker * 4.5f * flameScale
 
                 val baseFlameX = wickTipX
                 val baseFlameY = wickTipY - 2f
                 val tipFlameX = baseFlameX + swayX
                 val tipFlameY = baseFlameY - flameHeight
 
-                // Faint blue base near wick
+                // Faint blue base near the wick
                 drawOval(
                     brush = Brush.radialGradient(
                         colors = listOf(
-                            Color(0xFF2979FF).copy(alpha = 0.8f * flameScale),
+                            Color(0xFF2979FF).copy(alpha = 0.85f * flameScale),
                             Color(0x00000000)
                         ),
                         center = Offset(baseFlameX, baseFlameY),
-                        radius = flameWidth * 0.6f
+                        radius = flameWidth * 0.55f
                     ),
-                    topLeft = Offset(baseFlameX - flameWidth * 0.6f, baseFlameY - 8f),
-                    size = Size(flameWidth * 1.2f, 16f)
+                    topLeft = Offset(baseFlameX - flameWidth * 0.55f, baseFlameY - 10f),
+                    size = Size(flameWidth * 1.1f, 18f)
                 )
 
-                // Outer Mantle (Warm Orange / Amber)
+                // Outer Mantle (Red-orange tip -> Orange mid -> Warm amber)
                 flamePath.reset()
                 flamePath.moveTo(baseFlameX, baseFlameY)
                 flamePath.cubicTo(
-                    baseFlameX - flameWidth * 0.9f, baseFlameY - flameHeight * 0.35f,
-                    baseFlameX - flameWidth * 0.6f, baseFlameY - flameHeight * 0.75f,
+                    baseFlameX - flameWidth * 0.95f, baseFlameY - flameHeight * 0.35f,
+                    baseFlameX - flameWidth * 0.65f, baseFlameY - flameHeight * 0.75f,
                     tipFlameX, tipFlameY
                 )
                 flamePath.cubicTo(
-                    baseFlameX + flameWidth * 0.6f, baseFlameY - flameHeight * 0.75f,
-                    baseFlameX + flameWidth * 0.9f, baseFlameY - flameHeight * 0.35f,
+                    baseFlameX + flameWidth * 0.65f, baseFlameY - flameHeight * 0.75f,
+                    baseFlameX + flameWidth * 0.95f, baseFlameY - flameHeight * 0.35f,
                     baseFlameX, baseFlameY
                 )
                 flamePath.close()
@@ -442,9 +511,9 @@ fun CandleView(
                     )
                 )
 
-                // Inner Heart (Bright Yellow)
+                // Inner Bright Yellow Heart
                 val heartWidth = flameWidth * 0.62f
-                val heartHeight = flameHeight * 0.7f
+                val heartHeight = flameHeight * 0.72f
                 val heartTipX = baseFlameX + swayX * 0.7f
                 val heartTipY = baseFlameY - heartHeight
 
@@ -468,16 +537,16 @@ fun CandleView(
                         colors = listOf(
                             Color(0xFFFFD600),
                             Color(0xFFFFEA00),
-                            Color(0xFFFFF176)
+                            Color(0xFFFFF59D)
                         ),
                         startY = heartTipY,
                         endY = baseFlameY
                     )
                 )
 
-                // Bright White Core
-                val coreWidth = flameWidth * 0.3f
-                val coreHeight = flameHeight * 0.42f
+                // White-Yellow Core
+                val coreWidth = flameWidth * 0.32f
+                val coreHeight = flameHeight * 0.44f
                 val coreTipX = baseFlameX + swayX * 0.4f
                 val coreTipY = baseFlameY - coreHeight
 
@@ -497,7 +566,14 @@ fun CandleView(
 
                 drawPath(
                     path = flamePath,
-                    color = Color(0xFFFFFFFF)
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFFFFF9C4),
+                            Color(0xFFFFFFFF)
+                        ),
+                        startY = coreTipY,
+                        endY = baseFlameY
+                    )
                 )
             }
 

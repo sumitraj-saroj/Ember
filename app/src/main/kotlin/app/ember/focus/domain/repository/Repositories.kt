@@ -37,11 +37,13 @@ interface SettingsRepository {
     val settingsFlow: Flow<UserSettings>
     suspend fun updateDailyGoalMinutes(minutes: Int)
     suspend fun updateDefaultDurationMinutes(minutes: Int)
+    suspend fun updateDefaultCategoryId(categoryId: String)
     suspend fun updateStrictMode(enabled: Boolean)
     suspend fun updateAmbientSound(enabled: Boolean, volume: Float)
     suspend fun updateKeepScreenOn(enabled: Boolean)
     suspend fun updateBreakLengths(shortBreak: Int, longBreak: Int)
     suspend fun updateDailyReminder(enabled: Boolean, hour: Int, minute: Int)
+    suspend fun updateReminderDays(days: String)
     suspend fun setOnboardingCompleted(completed: Boolean)
     suspend fun updateFontPreset(preset: String)
 }

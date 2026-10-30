@@ -60,6 +60,9 @@ interface CategoryDao {
     @Query("SELECT * FROM categories WHERE isDeleted = 0 ORDER BY sortOrder ASC")
     fun getAllCategories(): Flow<List<CategoryEntity>>
 
+    @Query("SELECT * FROM categories WHERE isDeleted = 0 ORDER BY sortOrder ASC")
+    suspend fun getAllCategoriesList(): List<CategoryEntity>
+
     @Query("SELECT * FROM categories WHERE id = :id AND isDeleted = 0 LIMIT 1")
     suspend fun getCategoryById(id: String): CategoryEntity?
 

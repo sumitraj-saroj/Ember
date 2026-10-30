@@ -45,11 +45,11 @@ data class StatsUiState(
     val monthDayStats: List<DayStat> = emptyList(),
     val rangeTotalMinutes: Int = 0,
     val rangeDailyAverageMinutes: Int = 0,
-    val bestDayDescription: String = "None",
+    val bestDayDescription: String? = null,
     val categoryShares: List<CategoryShare> = emptyList(),
-    val averageRating: Float = 0f,
-    val completionRatePercentage: Int = 100,
-    val longestSessionMinutes: Int = 0,
+    val averageRating: Float? = null,
+    val completionRatePercentage: Int? = null,
+    val longestSessionMinutes: Int? = null,
     val currentStreak: Int = 0,
     val bestStreak: Int = 0,
     val inspectedDay: DayStat? = null
@@ -95,15 +95,15 @@ class StatsViewModel @Inject constructor(
         val weekDayStats = (0..6).map { offset ->
             val date = monday.plusDays(offset.toLong())
             val label = when (date.dayOfWeek) {
-                DayOfWeek.MONDAY -> "M"
-                DayOfWeek.TUESDAY -> "T"
-                DayOfWeek.WEDNESDAY -> "W"
-                DayOfWeek.THURSDAY -> "T"
-                DayOfWeek.FRIDAY -> "F"
-                DayOfWeek.SATURDAY -> "S"
-                DayOfWeek.SUNDAY -> "S"
+                DayOfWeek.MONDAY -> "Mon"
+                DayOfWeek.TUESDAY -> "Tue"
+                DayOfWeek.WEDNESDAY -> "Wed"
+                DayOfWeek.THURSDAY -> "Thu"
+                DayOfWeek.FRIDAY -> "Fri"
+                DayOfWeek.SATURDAY -> "Sat"
+                DayOfWeek.SUNDAY -> "Sun"
             }
-            DayStat(date, label, dayMap[date] ?: 0)
+            DayStat(date, label, dayMap[date] ?: 0, isToday = date == today)
         }
 
         // 2. Month Stats
@@ -111,7 +111,7 @@ class StatsViewModel @Inject constructor(
         val daysInMonthCount = currentYearMonth.lengthOfMonth()
         val monthDayStats = (1..daysInMonthCount).map { dayNum ->
             val date = currentYearMonth.atDay(dayNum)
-            DayStat(date, dayNum.toString(), dayMap[date] ?: 0)
+            DayStat(date, dayNum.toString(), dayMap[date] ?: 0, isToday = date == today)
         }
 
         // Select active range based on tab
@@ -131,14 +131,14 @@ class StatsViewModel @Inject constructor(
             rangeTotalMinutes / relevantDates.size
         } else 0
 
-        // Best Day
+        // Best Day: undefined/null if zero sessions
         val bestStat = (if (tab == StatsTab.WEEK) weekDayStats else monthDayStats).maxByOrNull { it.minutes }
         val bestDayDesc = if (bestStat != null && bestStat.minutes > 0) {
             val h = bestStat.minutes / 60
             val m = bestStat.minutes % 60
             "${bestStat.date.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }} (${if (h > 0) "${h}h ${m}m" else "${m}m"})"
         } else {
-            "None"
+            null
         }
 
         // Category Shares
@@ -154,21 +154,24 @@ class StatsViewModel @Inject constructor(
             } else null
         }.sortedByDescending { it.totalMinutes }
 
-        // Average Rating
+        // Average Rating: undefined/null if zero rated sessions
         val ratedSessions = rangeSessions.mapNotNull { it.rating }
         val avgRating = if (ratedSessions.isNotEmpty()) {
             ratedSessions.average().toFloat()
-        } else 0f
+        } else null
 
-        // Completion Rate
-        val totalSessionsCount = rangeSessions.size
-        val completedSessionsCount = rangeSessions.count { it.status == SessionStatus.COMPLETED }
-        val completionRate = if (totalSessionsCount > 0) {
-            ((completedSessionsCount.toFloat() / totalSessionsCount.toFloat()) * 100).toInt()
-        } else 100
+        // Completion Rate: completed / (completed + broken), undefined when there are none (ST3)
+        val completedCount = rangeSessions.count { it.status == SessionStatus.COMPLETED }
+        val brokenCount = rangeSessions.count { it.status == SessionStatus.BROKEN }
+        val finishedCount = completedCount + brokenCount
+        val completionRate = if (finishedCount > 0) {
+            ((completedCount.toFloat() / finishedCount.toFloat()) * 100).toInt()
+        } else null
 
-        // Longest session
-        val longest = rangeSessions.maxOfOrNull { it.focusedSec / 60 } ?: 0
+        // Longest session: undefined/null if zero sessions
+        val longest = if (rangeSessions.isNotEmpty() && rangeSessions.any { it.focusedSec > 0 }) {
+            rangeSessions.maxOf { it.focusedSec / 60 }
+        } else null
 
         StatsUiState(
             selectedTab = tab,

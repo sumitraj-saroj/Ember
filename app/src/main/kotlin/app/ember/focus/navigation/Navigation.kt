@@ -1,5 +1,8 @@
 package app.ember.focus.navigation
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
@@ -12,6 +15,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import app.ember.focus.BuildConfig
 import app.ember.focus.ui.theme.TextCream
 
 @Composable
@@ -41,10 +45,25 @@ fun EmberNavGraph(
         }
         composable(Screen.Today.route) {
             app.ember.focus.ui.today.TodayScreen(
+                onNavigateToStartSession = { navController.navigate(Screen.StartSession.route) },
                 onNavigateToFocus = { navController.navigate(Screen.Focus.route) },
                 onNavigateToStats = { navController.navigate(Screen.Stats.route) },
                 onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                 onNavigateToCandleLab = { navController.navigate(Screen.CandleLab.route) }
+            )
+        }
+        composable(
+            route = Screen.StartSession.route,
+            enterTransition = { slideInVertically(initialOffsetY = { it }, animationSpec = tween(350)) },
+            exitTransition = { slideOutVertically(targetOffsetY = { it }, animationSpec = tween(300)) }
+        ) {
+            app.ember.focus.ui.today.StartSessionScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToFocus = {
+                    navController.navigate(Screen.Focus.route) {
+                        popUpTo(Screen.StartSession.route) { inclusive = true }
+                    }
+                }
             )
         }
         composable(Screen.Focus.route) {
@@ -62,10 +81,12 @@ fun EmberNavGraph(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
-        composable(Screen.CandleLab.route) {
-            app.ember.focus.ui.candle.CandleLabScreen(
-                onNavigateBack = { navController.popBackStack() }
-            )
+        if (BuildConfig.DEBUG) {
+            composable(Screen.CandleLab.route) {
+                app.ember.focus.ui.candle.CandleLabScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
         }
     }
 }
