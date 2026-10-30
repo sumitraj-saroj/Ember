@@ -43,4 +43,5 @@ interface SettingsRepository {
     suspend fun updateBreakLengths(shortBreak: Int, longBreak: Int)
     suspend fun updateDailyReminder(enabled: Boolean, hour: Int, minute: Int)
     suspend fun setOnboardingCompleted(completed: Boolean)
+    suspend fun updateFontPreset(preset: String)
 }

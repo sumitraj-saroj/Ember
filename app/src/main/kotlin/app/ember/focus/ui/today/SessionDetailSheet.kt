@@ -51,6 +51,7 @@ import app.ember.focus.domain.model.SessionStatus
 import app.ember.focus.ui.focus.GoalPill
 import app.ember.focus.ui.theme.AmberAccent
 import app.ember.focus.ui.theme.AshGray
+import app.ember.focus.ui.theme.EmberTheme
 import app.ember.focus.ui.theme.PrimaryPillFill
 import app.ember.focus.ui.theme.PrimaryPillText
 import app.ember.focus.ui.theme.SecondaryPillBorder
@@ -136,7 +137,7 @@ fun SessionDetailSheet(
                     ) {
                         Text(
                             text = "Broken · ${session.focusedSec / 60}m counted",
-                            fontSize = 11.sp,
+                            style = EmberTheme.typography.caption,
                             color = AshGray
                         )
                     }
@@ -150,7 +151,7 @@ fun SessionDetailSheet(
                     ) {
                         Text(
                             text = "${session.focusedSec / 60}m completed",
-                            fontSize = 11.sp,
+                            style = EmberTheme.typography.caption,
                             color = AmberAccent
                         )
                     }
@@ -204,7 +205,7 @@ fun SessionDetailSheet(
                     ) {
                         Text(
                             text = cat.name,
-                            fontSize = 12.sp,
+                            style = EmberTheme.typography.caption,
                             color = if (isSelected) TextCream else TextMuted
                         )
                     }

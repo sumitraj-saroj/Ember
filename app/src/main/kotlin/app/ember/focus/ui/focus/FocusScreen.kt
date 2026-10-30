@@ -17,10 +17,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -45,15 +44,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import app.ember.focus.core.timer.TimerStatus
 import app.ember.focus.domain.util.formatSessionPlanLabel
@@ -64,6 +59,7 @@ import app.ember.focus.ui.theme.AmberAccent
 import app.ember.focus.ui.theme.AshGray
 import app.ember.focus.ui.theme.BackgroundBottom
 import app.ember.focus.ui.theme.BackgroundTop
+import app.ember.focus.ui.theme.EmberTheme
 import app.ember.focus.ui.theme.PrimaryPillFill
 import app.ember.focus.ui.theme.PrimaryPillText
 import app.ember.focus.ui.theme.SecondaryPillBorder
@@ -72,7 +68,6 @@ import app.ember.focus.ui.theme.SecondaryPillText
 import app.ember.focus.ui.theme.SurfaceCard
 import app.ember.focus.ui.theme.TextCream
 import app.ember.focus.ui.theme.TextMuted
-import app.ember.focus.ui.theme.Typography
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -87,7 +82,6 @@ fun FocusScreen(
     val showResetDialog by viewModel.showResetDialog.collectAsState()
 
     val context = LocalContext.current
-    val view = LocalView.current
 
     // Keep screen on while burning (if setting enabled)
     DisposableEffect(settings.keepScreenOn, timerState.status) {
@@ -101,28 +95,6 @@ fun FocusScreen(
         }
         onDispose {
             window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        }
-    }
-
-    // Immersive mode during session
-    DisposableEffect(timerState.status) {
-        val window = (context as? Activity)?.window
-        if (window != null) {
-            val insetsController = WindowCompat.getInsetsController(window, view)
-            if (timerState.status == TimerStatus.RUNNING || timerState.status == TimerStatus.OVERTIME) {
-                insetsController.systemBarsBehavior =
-                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                insetsController.hide(WindowInsetsCompat.Type.systemBars())
-            } else {
-                insetsController.show(WindowInsetsCompat.Type.systemBars())
-            }
-        }
-        onDispose {
-            val window = (context as? Activity)?.window
-            if (window != null) {
-                val insetsController = WindowCompat.getInsetsController(window, view)
-                insetsController.show(WindowInsetsCompat.Type.systemBars())
-            }
         }
     }
 
@@ -157,7 +129,7 @@ fun FocusScreen(
         }
     }
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(
@@ -165,123 +137,147 @@ fun FocusScreen(
                     colors = listOf(BackgroundTop, BackgroundBottom)
                 )
             )
-            .statusBarsPadding()
-            .navigationBarsPadding()
+            .safeDrawingPadding() // Ensures status bars, display cutouts (notch) & navigation bars are padded
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
+        // 16dp spacing below status bar before header starts
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // ZONE 1: TOP HEADER
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // TOP HEADER
-            Row(
+            IconButton(
+                onClick = onNavigateBack,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(SecondaryPillFill)
+                    .border(1.dp, SecondaryPillBorder, CircleShape)
             ) {
-                IconButton(
-                    onClick = onNavigateBack,
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clip(CircleShape)
-                        .background(SecondaryPillFill)
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Return to day view",
-                        tint = TextCream
-                    )
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Return to day view",
+                    tint = TextCream,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 12.dp)
+            ) {
+                // Top label in small caps (app name)
+                Text(
+                    text = "EMBER",
+                    style = EmberTheme.typography.topLabel,
+                    color = AmberAccent,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(2.dp))
+
+                // Task title (28sp, tight)
+                Text(
+                    text = timerState.taskName.ifBlank { "Deep work" },
+                    style = EmberTheme.typography.taskTitle,
+                    color = TextCream,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center
+                )
+
+                // Subtitle: goal and planned session count
+                val planLabel = formatSessionPlanLabel(
+                    timerState.completedSessionsCount,
+                    timerState.plannedSessionCount
+                )
+                val subtitle = buildString {
+                    if (!timerState.goal.isNullOrBlank()) {
+                        append(timerState.goal)
+                        if (planLabel != null) append(" · ")
+                    }
+                    if (planLabel != null) append(planLabel)
                 }
 
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.weight(1f).padding(horizontal = 8.dp)
-                ) {
-                    Text(
-                        text = "EMBER",
-                        style = Typography.labelMedium,
-                        color = AmberAccent
-                    )
+                if (subtitle.isNotBlank()) {
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = timerState.taskName.ifBlank { "Deep work" },
-                        style = Typography.titleLarge,
-                        color = TextCream,
+                        text = subtitle,
+                        style = EmberTheme.typography.subtitle,
+                        color = TextMuted,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-
-                    // Subtitle: goal and planned session count
-                    val planLabel = formatSessionPlanLabel(
-                        timerState.completedSessionsCount,
-                        timerState.plannedSessionCount
-                    )
-                    val subtitle = buildString {
-                        if (!timerState.goal.isNullOrBlank()) {
-                            append(timerState.goal)
-                            if (planLabel != null) append(" · ")
-                        }
-                        if (planLabel != null) append(planLabel)
-                    }
-
-                    if (subtitle.isNotBlank()) {
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = subtitle,
-                            style = Typography.bodySmall,
-                            color = TextMuted,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                }
-
-                IconButton(
-                    onClick = { viewModel.toggleAmbientSound() },
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clip(CircleShape)
-                        .background(SecondaryPillFill)
-                ) {
-                    Icon(
-                        imageVector = if (settings.ambientSoundEnabled) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
-                        contentDescription = if (settings.ambientSoundEnabled) "Mute fire crackle" else "Enable fire crackle",
-                        tint = if (settings.ambientSoundEnabled) AmberAccent else TextMuted
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center
                     )
                 }
             }
 
-            // Strict mode grace timer banner
-            AnimatedVisibility(
-                visible = timerState.isGraceTimerRunning,
-                enter = fadeIn(),
-                exit = fadeOut()
+            IconButton(
+                onClick = { viewModel.toggleAmbientSound() },
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(SecondaryPillFill)
+                    .border(1.dp, SecondaryPillBorder, CircleShape)
             ) {
-                Box(
-                    modifier = Modifier
-                        .padding(horizontal = 24.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(Color(0xFF552211))
-                        .border(1.dp, Color(0xFFFF5722), RoundedCornerShape(16.dp))
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                ) {
-                    Text(
-                        text = "Grace timer: ${timerState.graceRemainingSec}s before candle blows out!",
-                        color = Color(0xFFFFCCBC),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
+                Icon(
+                    imageVector = if (settings.ambientSoundEnabled) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
+                    contentDescription = if (settings.ambientSoundEnabled) "Mute fire crackle" else "Enable fire crackle",
+                    tint = if (settings.ambientSoundEnabled) AmberAccent else TextMuted,
+                    modifier = Modifier.size(20.dp)
+                )
             }
+        }
 
-            // CENTER CANDLE VIEW
+        // Strict mode grace timer banner (if running)
+        AnimatedVisibility(
+            visible = timerState.isGraceTimerRunning,
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
-                    .padding(vertical = 8.dp),
+                    .padding(horizontal = 24.dp, vertical = 8.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color(0xFF552211))
+                    .border(1.dp, Color(0xFFFF5722), RoundedCornerShape(16.dp))
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Grace timer: ${timerState.graceRemainingSec}s before candle blows out!",
+                    style = EmberTheme.typography.caption,
+                    color = Color(0xFFFFCCBC),
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
+
+        // Vertical rhythm: header to candle gap about 24dp
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // ZONE 2: FLEXIBLE AREA (weight 1f)
+        // Candle sits centered and scales to available height, with timer and status directly below it
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            // Scalable Candle View
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f, fill = true)
+                    .padding(horizontal = 24.dp),
                 contentAlignment = Alignment.Center
             ) {
                 CandleView(
@@ -293,137 +289,144 @@ fun FocusScreen(
                 )
             }
 
-            // TIMER DIGITS & STATUS LINE
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(bottom = 24.dp)
-            ) {
-                val isOvertime = timerState.status == TimerStatus.OVERTIME
-                val displaySec = if (isOvertime) timerState.overtimeSec else timerState.remainingSec
+            // Vertical rhythm: candle to timer gap about 16dp
+            Spacer(modifier = Modifier.height(16.dp))
 
-                RollingTimerDisplay(
-                    seconds = displaySec,
-                    isOvertime = isOvertime
-                )
+            // Timer digits
+            val isOvertime = timerState.status == TimerStatus.OVERTIME
+            val displaySec = if (isOvertime) timerState.overtimeSec else timerState.remainingSec
 
-                Spacer(modifier = Modifier.height(8.dp))
+            RollingTimerDisplay(
+                seconds = displaySec,
+                isOvertime = isOvertime
+            )
 
-                val statusText = when (timerState.status) {
-                    TimerStatus.RUNNING -> "Focus · ends at ${viewModel.getEstimatedEndTime()}"
-                    TimerStatus.PAUSED -> "Paused"
-                    TimerStatus.OVERTIME -> "In flow · +${timerState.overtimeSec / 60} min"
-                    TimerStatus.COMPLETED -> "Session done · take five"
-                    TimerStatus.BROKEN -> "Candle went out · ${timerState.totalFocusedMinutes} min counted"
-                    TimerStatus.IDLE -> "Ready to ignite"
-                }
+            // Vertical rhythm: timer to status gap 8dp
+            Spacer(modifier = Modifier.height(8.dp))
 
-                Text(
-                    text = statusText,
-                    style = Typography.bodyMedium,
-                    color = if (timerState.status == TimerStatus.BROKEN) AshGray else TextMuted
-                )
+            // Status line under the timer
+            val statusText = when (timerState.status) {
+                TimerStatus.RUNNING -> "Focus · ends at ${viewModel.getEstimatedEndTime()}"
+                TimerStatus.PAUSED -> "Paused"
+                TimerStatus.OVERTIME -> "In flow · +${timerState.overtimeSec / 60} min"
+                TimerStatus.COMPLETED -> "Session done · take five"
+                TimerStatus.BROKEN -> "Candle went out · ${timerState.totalFocusedMinutes} min counted"
+                TimerStatus.IDLE -> "Ready to ignite"
             }
 
-            // BOTTOM ACTION BUTTONS
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 20.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                when (timerState.status) {
-                    TimerStatus.RUNNING, TimerStatus.PAUSED -> {
-                        // Left: Pause/Resume (Dark pill)
-                        val isPaused = timerState.status == TimerStatus.PAUSED
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(32.dp))
-                                .background(SecondaryPillFill)
-                                .border(1.dp, SecondaryPillBorder, RoundedCornerShape(32.dp))
-                                .clickable { viewModel.onPauseResumeClicked() }
-                                .padding(vertical = 16.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = if (isPaused) "Resume" else "Pause",
-                                style = Typography.labelLarge,
-                                color = SecondaryPillText
-                            )
-                        }
+            Text(
+                text = statusText,
+                style = EmberTheme.typography.statusLine,
+                color = if (timerState.status == TimerStatus.BROKEN) AshGray else TextMuted,
+                textAlign = TextAlign.Center
+            )
+        }
 
-                        // Right: Reset (Cream pill)
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(32.dp))
-                                .background(PrimaryPillFill)
-                                .clickable { viewModel.onResetClicked() }
-                                .padding(vertical = 16.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "Reset",
-                                style = Typography.labelLarge,
-                                color = PrimaryPillText
-                            )
-                        }
+        // Gap between flexible area and button row
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // ZONE 3: BUTTON ROW AT THE BOTTOM
+        // Buttons are 56dp high, 12dp between them, 24dp horizontal screen padding,
+        // with 32dp extra bottom margin above navigation bars
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            when (timerState.status) {
+                TimerStatus.RUNNING, TimerStatus.PAUSED -> {
+                    val isPaused = timerState.status == TimerStatus.PAUSED
+                    // Left: Pause/Resume (Dark pill)
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(56.dp)
+                            .clip(RoundedCornerShape(28.dp))
+                            .background(SecondaryPillFill)
+                            .border(1.dp, SecondaryPillBorder, RoundedCornerShape(28.dp))
+                            .clickable { viewModel.onPauseResumeClicked() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (isPaused) "Resume" else "Pause",
+                            style = EmberTheme.typography.button,
+                            color = SecondaryPillText
+                        )
                     }
 
-                    TimerStatus.OVERTIME -> {
-                        // Left: Pause
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(32.dp))
-                                .background(SecondaryPillFill)
-                                .border(1.dp, SecondaryPillBorder, RoundedCornerShape(32.dp))
-                                .clickable { viewModel.onPauseResumeClicked() }
-                                .padding(vertical = 16.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "Pause",
-                                style = Typography.labelLarge,
-                                color = SecondaryPillText
-                            )
-                        }
+                    // Right: Reset (Cream pill)
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(56.dp)
+                            .clip(RoundedCornerShape(28.dp))
+                            .background(PrimaryPillFill)
+                            .clickable { viewModel.onResetClicked() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Reset",
+                            style = EmberTheme.typography.button,
+                            color = PrimaryPillText
+                        )
+                    }
+                }
 
-                        // Right: Finish
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(32.dp))
-                                .background(PrimaryPillFill)
-                                .clickable { viewModel.onFinishClicked() }
-                                .padding(vertical = 16.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "Finish",
-                                style = Typography.labelLarge,
-                                color = PrimaryPillText
-                            )
-                        }
+                TimerStatus.OVERTIME -> {
+                    // Left: Pause
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(56.dp)
+                            .clip(RoundedCornerShape(28.dp))
+                            .background(SecondaryPillFill)
+                            .border(1.dp, SecondaryPillBorder, RoundedCornerShape(28.dp))
+                            .clickable { viewModel.onPauseResumeClicked() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Pause",
+                            style = EmberTheme.typography.button,
+                            color = SecondaryPillText
+                        )
                     }
 
-                    TimerStatus.COMPLETED, TimerStatus.BROKEN, TimerStatus.IDLE -> {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(32.dp))
-                                .background(PrimaryPillFill)
-                                .clickable { onNavigateBack() }
-                                .padding(vertical = 16.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "Done",
-                                style = Typography.labelLarge,
-                                color = PrimaryPillText
-                            )
-                        }
+                    // Right: Finish
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(56.dp)
+                            .clip(RoundedCornerShape(28.dp))
+                            .background(PrimaryPillFill)
+                            .clickable { viewModel.onFinishClicked() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Finish",
+                            style = EmberTheme.typography.button,
+                            color = PrimaryPillText
+                        )
+                    }
+                }
+
+                TimerStatus.COMPLETED, TimerStatus.BROKEN, TimerStatus.IDLE -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .clip(RoundedCornerShape(28.dp))
+                            .background(PrimaryPillFill)
+                            .clickable { onNavigateBack() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Done",
+                            style = EmberTheme.typography.button,
+                            color = PrimaryPillText
+                        )
                     }
                 }
             }
@@ -445,14 +448,14 @@ fun FocusScreen(
             title = {
                 Text(
                     text = "Extinguish candle?",
-                    style = Typography.titleLarge,
+                    style = EmberTheme.typography.listCardTitle,
                     color = TextCream
                 )
             },
             text = {
                 Text(
                     text = msg,
-                    style = Typography.bodyMedium,
+                    style = EmberTheme.typography.body,
                     color = TextMuted
                 )
             },
@@ -465,12 +468,12 @@ fun FocusScreen(
                         }
                     }
                 ) {
-                    Text("Reset candle", color = AmberAccent, fontWeight = FontWeight.Bold)
+                    Text("Reset candle", style = EmberTheme.typography.button, color = AmberAccent)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { viewModel.dismissResetDialog() }) {
-                    Text("Keep burning", color = TextMuted)
+                    Text("Keep burning", style = EmberTheme.typography.button, color = TextMuted)
                 }
             }
         )

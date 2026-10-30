@@ -15,7 +15,7 @@ val TableWoodBottom = Color(0xFF120E0A)
 
 // Typography & Text
 val TextCream = Color(0xFFF2E6D0)
-val TextMuted = Color(0xFF8C8176)
+val TextMuted = Color(0xFFA39688) // WCAG AA compliant (>= 6:1 contrast on dark surfaces)
 val TextSubtle = Color(0xFF5E554C)
 val TextDark = Color(0xFF1A120C)
 

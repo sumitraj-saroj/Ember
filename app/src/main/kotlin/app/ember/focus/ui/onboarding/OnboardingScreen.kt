@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -47,12 +47,12 @@ import app.ember.focus.ui.candle.CandleView
 import app.ember.focus.ui.theme.AmberAccent
 import app.ember.focus.ui.theme.BackgroundBottom
 import app.ember.focus.ui.theme.BackgroundTop
+import app.ember.focus.ui.theme.EmberTheme
 import app.ember.focus.ui.theme.PrimaryPillFill
 import app.ember.focus.ui.theme.PrimaryPillText
 import app.ember.focus.ui.theme.SecondaryPillFill
 import app.ember.focus.ui.theme.TextCream
 import app.ember.focus.ui.theme.TextMuted
-import app.ember.focus.ui.theme.Typography
 import kotlinx.coroutines.launch
 
 @Composable
@@ -80,8 +80,7 @@ fun OnboardingScreen(
                     colors = listOf(BackgroundTop, BackgroundBottom)
                 )
             )
-            .statusBarsPadding()
-            .navigationBarsPadding()
+            .safeDrawingPadding()
             .padding(horizontal = 24.dp, vertical = 16.dp)
     ) {
         Column(
@@ -99,7 +98,7 @@ fun OnboardingScreen(
             ) {
                 Text(
                     text = "EMBER",
-                    style = Typography.labelMedium,
+                    style = EmberTheme.typography.topLabel,
                     color = AmberAccent
                 )
 
@@ -111,7 +110,7 @@ fun OnboardingScreen(
                 ) {
                     Text(
                         text = "Skip",
-                        style = Typography.labelLarge,
+                        style = EmberTheme.typography.button.copy(fontSize = 14.sp),
                         color = AmberAccent
                     )
                 }
@@ -148,14 +147,14 @@ fun OnboardingScreen(
                             Spacer(modifier = Modifier.height(24.dp))
                             Text(
                                 text = "Focus as a Burning Candle",
-                                style = Typography.headlineMedium,
+                                style = EmberTheme.typography.taskTitle,
                                 color = TextCream,
                                 textAlign = TextAlign.Center
                             )
                             Spacer(modifier = Modifier.height(10.dp))
                             Text(
                                 text = "Every deep work session is a real candle that melts away. Watch your focus take physical form and single-task with intention.",
-                                style = Typography.bodyMedium,
+                                style = EmberTheme.typography.body,
                                 color = TextMuted,
                                 textAlign = TextAlign.Center
                             )
@@ -180,14 +179,14 @@ fun OnboardingScreen(
                             Spacer(modifier = Modifier.height(32.dp))
                             Text(
                                 text = "Strict Discipline",
-                                style = Typography.headlineMedium,
+                                style = EmberTheme.typography.taskTitle,
                                 color = TextCream,
                                 textAlign = TextAlign.Center
                             )
                             Spacer(modifier = Modifier.height(10.dp))
                             Text(
                                 text = "Leaving Ember for another app blows out your candle and marks the session broken. Locking your phone is always safe.",
-                                style = Typography.bodyMedium,
+                                style = EmberTheme.typography.body,
                                 color = TextMuted,
                                 textAlign = TextAlign.Center
                             )
@@ -212,14 +211,14 @@ fun OnboardingScreen(
                             Spacer(modifier = Modifier.height(24.dp))
                             Text(
                                 text = "Set Your Ambition",
-                                style = Typography.headlineMedium,
+                                style = EmberTheme.typography.taskTitle,
                                 color = TextCream,
                                 textAlign = TextAlign.Center
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = "Choose your daily focus target to ignite your streak.",
-                                style = Typography.bodyMedium,
+                                style = EmberTheme.typography.body,
                                 color = TextMuted,
                                 textAlign = TextAlign.Center
                             )
@@ -228,7 +227,7 @@ fun OnboardingScreen(
 
                             Text(
                                 text = "${dailyGoalHours.toInt()} hours / day",
-                                style = Typography.displayMedium,
+                                style = EmberTheme.typography.statsNumber,
                                 color = AmberAccent
                             )
 
@@ -277,6 +276,12 @@ fun OnboardingScreen(
                 }
 
                 // Action Pill — whole Box is clickable with large touch target
+                val buttonText = when (pagerState.currentPage) {
+                    0 -> "Next: Strict Discipline →"
+                    1 -> "Next: Set Daily Goal →"
+                    else -> "Light Your First Candle"
+                }
+
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -284,9 +289,10 @@ fun OnboardingScreen(
                         .clip(RoundedCornerShape(28.dp))
                         .background(PrimaryPillFill)
                         .clickable {
-                            if (pagerState.currentPage < 2) {
+                            val current = pagerState.currentPage
+                            if (current < 2) {
                                 scope.launch {
-                                    pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                                    pagerState.animateScrollToPage(current + 1)
                                 }
                             } else {
                                 completeOnboarding()
@@ -295,8 +301,8 @@ fun OnboardingScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = if (pagerState.currentPage < 2) "Continue" else "Light your first candle",
-                        style = Typography.labelLarge,
+                        text = buttonText,
+                        style = EmberTheme.typography.button,
                         fontWeight = FontWeight.Bold,
                         color = PrimaryPillText
                     )

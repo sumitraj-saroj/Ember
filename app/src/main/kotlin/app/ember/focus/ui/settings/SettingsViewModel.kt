@@ -104,4 +104,10 @@ class SettingsViewModel @Inject constructor(
             categoryRepository.deleteCategory(categoryId)
         }
     }
+
+    fun updateFontPreset(preset: String) {
+        viewModelScope.launch {
+            settingsRepository.updateFontPreset(preset)
+        }
+    }
 }

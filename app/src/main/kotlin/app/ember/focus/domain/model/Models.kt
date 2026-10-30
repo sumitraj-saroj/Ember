@@ -53,5 +53,6 @@ data class UserSettings(
     val dailyReminderEnabled: Boolean = false,
     val dailyReminderHour: Int = 9,
     val dailyReminderMinute: Int = 0,
-    val onboardingCompleted: Boolean = false
+    val onboardingCompleted: Boolean = false,
+    val fontPreset: String = "MANROPE" // "MANROPE" or "FRAUNCES"
 )

@@ -1,9 +1,7 @@
 package app.ember.focus.ui.focus
 
 import java.util.Locale
-
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -13,18 +11,17 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.ember.focus.ui.theme.EmberTheme
 import app.ember.focus.ui.theme.TextCream
 
 @Composable
@@ -64,11 +61,10 @@ fun RollingTimerDisplay(
                     digit = char,
                     color = color
                 )
+            } else if (char == ':') {
+                ColonSeparator(color = color)
             } else {
-                StaticSeparator(
-                    char = char,
-                    color = color
-                )
+                PlusPrefix(color = color)
             }
         }
     }
@@ -80,8 +76,11 @@ fun RollingDigit(
     color: Color,
     modifier: Modifier = Modifier
 ) {
+    // Fixed width slot to guarantee 0 width-jitter when digits change
     Box(
-        modifier = modifier.width(36.dp),
+        modifier = modifier
+            .width(52.dp)
+            .height(96.dp),
         contentAlignment = Alignment.Center
     ) {
         AnimatedContent(
@@ -98,39 +97,54 @@ fun RollingDigit(
         ) { targetDigit ->
             Text(
                 text = targetDigit.toString(),
-                style = TextStyle(
-                    fontFamily = FontFamily.SansSerif,
-                    fontWeight = FontWeight.ExtraLight,
-                    fontSize = 62.sp,
-                    lineHeight = 64.sp,
-                    color = color,
-                    textAlign = TextAlign.Center
-                )
+                style = EmberTheme.typography.timerDigits.copy(color = color),
+                textAlign = TextAlign.Center
             )
         }
     }
 }
 
 @Composable
-fun StaticSeparator(
-    char: Char,
+fun ColonSeparator(
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    // Colon drawn separately, vertically centered, 50% opacity
+    Box(
+        modifier = modifier
+            .width(22.dp)
+            .height(96.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = ":",
+            style = EmberTheme.typography.timerColon.copy(
+                color = color.copy(alpha = 0.5f)
+            ),
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+fun PlusPrefix(
     color: Color,
     modifier: Modifier = Modifier
 ) {
     Box(
-        modifier = modifier.width(if (char == '+') 28.dp else 18.dp),
+        modifier = modifier
+            .width(36.dp)
+            .height(96.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = char.toString(),
-            style = TextStyle(
-                fontFamily = FontFamily.SansSerif,
-                fontWeight = FontWeight.ExtraLight,
-                fontSize = if (char == '+') 48.sp else 56.sp,
-                lineHeight = 64.sp,
-                color = color,
-                textAlign = TextAlign.Center
-            )
+            text = "+",
+            style = EmberTheme.typography.timerDigits.copy(
+                fontSize = 52.sp,
+                lineHeight = 56.sp,
+                color = color
+            ),
+            textAlign = TextAlign.Center
         )
     }
 }

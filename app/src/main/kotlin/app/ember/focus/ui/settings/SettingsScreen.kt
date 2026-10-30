@@ -19,7 +19,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.safeDrawingPadding
+import app.ember.focus.BuildConfig
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -67,6 +68,7 @@ import app.ember.focus.ui.theme.AmberAccent
 import app.ember.focus.ui.theme.BackgroundBottom
 import app.ember.focus.ui.theme.BackgroundTop
 import app.ember.focus.ui.theme.CategoryColors
+import app.ember.focus.ui.theme.EmberTheme
 import app.ember.focus.ui.theme.PrimaryPillFill
 import app.ember.focus.ui.theme.PrimaryPillText
 import app.ember.focus.ui.theme.SecondaryPillBorder
@@ -107,8 +109,7 @@ fun SettingsScreen(
                     colors = listOf(BackgroundTop, BackgroundBottom)
                 )
             )
-            .statusBarsPadding()
-            .navigationBarsPadding()
+            .safeDrawingPadding()
             .verticalScroll(rememberScrollState())
     ) {
         // TOP HEADER
@@ -203,8 +204,8 @@ fun SettingsScreen(
                     ) {
                         Text(
                             text = "${preset}m",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
+                            style = EmberTheme.typography.caption,
+                            fontWeight = FontWeight.SemiBold,
                             color = if (isSelected) PrimaryPillText else SecondaryPillText
                         )
                     }
@@ -389,7 +390,7 @@ fun SettingsScreen(
                         .padding(horizontal = 14.dp, vertical = 8.dp)
                 ) {
                     val formatted = String.format(Locale.US, "%02d:%02d", settings.dailyReminderHour, settings.dailyReminderMinute)
-                    Text(text = "Change Reminder Time: $formatted", fontSize = 12.sp, color = AmberAccent)
+                    Text(text = "Change Reminder Time: $formatted", style = EmberTheme.typography.caption, color = AmberAccent)
                 }
             }
         }
@@ -456,6 +457,49 @@ fun SettingsScreen(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+
+        // DEBUG: FONT PRESET
+        if (BuildConfig.DEBUG) {
+            SettingsSection(title = "TYPOGRAPHY PRESET (DEBUG)") {
+                Text(
+                    text = "Font preset",
+                    style = EmberTheme.typography.listCardTitle,
+                    color = TextCream
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Compare default modern variable sans (Manrope) vs variable serif (Fraunces).",
+                    style = EmberTheme.typography.caption,
+                    color = TextMuted
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    listOf("Manrope (Default)" to "MANROPE", "Fraunces (Serif)" to "FRAUNCES").forEach { (label, value) ->
+                        val isSelected = settings.fontPreset.equals(value, ignoreCase = true)
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(if (isSelected) AmberAccent else SecondaryPillFill)
+                                .border(1.dp, if (isSelected) AmberAccent else SecondaryPillBorder, RoundedCornerShape(14.dp))
+                                .clickable { viewModel.updateFontPreset(value) }
+                                .padding(vertical = 12.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = label,
+                                style = EmberTheme.typography.button,
+                                color = if (isSelected) PrimaryPillText else SecondaryPillText
+                            )
+                        }
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         // 6. ABOUT EMBER
         SettingsSection(title = "ABOUT") {

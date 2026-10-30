@@ -35,9 +35,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.ember.focus.ui.theme.AmberAccent
+import app.ember.focus.ui.theme.EmberTheme
 import app.ember.focus.ui.theme.AshGray
 import app.ember.focus.ui.theme.PrimaryPillFill
 import app.ember.focus.ui.theme.PrimaryPillText
@@ -234,7 +236,8 @@ fun GoalPill(
     ) {
         Text(
             text = text,
-            fontSize = 13.sp,
+            style = EmberTheme.typography.caption,
+            fontWeight = FontWeight.SemiBold,
             color = if (selected) PrimaryPillText else SecondaryPillText
         )
     }

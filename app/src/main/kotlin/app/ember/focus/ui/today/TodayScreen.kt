@@ -22,7 +22,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -71,6 +71,7 @@ import app.ember.focus.ui.theme.AmberAccent
 import app.ember.focus.ui.theme.AshGray
 import app.ember.focus.ui.theme.BackgroundBottom
 import app.ember.focus.ui.theme.BackgroundTop
+import app.ember.focus.ui.theme.EmberTheme
 import app.ember.focus.ui.theme.PrimaryPillFill
 import app.ember.focus.ui.theme.PrimaryPillText
 import app.ember.focus.ui.theme.SecondaryPillBorder
@@ -147,8 +148,7 @@ fun TodayScreen(
                     colors = listOf(BackgroundTop, BackgroundBottom)
                 )
             )
-            .statusBarsPadding()
-            .navigationBarsPadding()
+            .safeDrawingPadding()
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             // TOP BAR: Branding on left, Quick Actions on right
@@ -360,7 +360,7 @@ fun TodayScreen(
                         ) {
                             Text(
                                 text = "Return",
-                                fontSize = 12.sp,
+                                style = EmberTheme.typography.caption,
                                 fontWeight = FontWeight.Bold,
                                 color = PrimaryPillText
                             )
@@ -659,7 +659,7 @@ fun SessionCard(
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = session.categoryName,
-                        fontSize = 11.sp,
+                        style = EmberTheme.typography.caption,
                         color = catColor,
                         fontWeight = FontWeight.Medium
                     )
@@ -732,7 +732,7 @@ fun SessionCard(
                         ) {
                             Text(
                                 text = "Broken",
-                                fontSize = 10.sp,
+                                style = EmberTheme.typography.caption,
                                 color = AshGray,
                                 fontWeight = FontWeight.Bold
                             )

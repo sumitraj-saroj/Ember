@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.datastore.preferences.core.stringPreferencesKey
 import app.ember.focus.domain.model.UserSettings
 import app.ember.focus.domain.repository.SettingsRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -36,6 +37,7 @@ class SettingsRepositoryImpl @Inject constructor(
         val DAILY_REMINDER_HOUR = intPreferencesKey("daily_reminder_hour")
         val DAILY_REMINDER_MINUTE = intPreferencesKey("daily_reminder_minute")
         val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
+        val FONT_PRESET = stringPreferencesKey("font_preset")
     }
 
     override val settingsFlow: Flow<UserSettings> = context.dataStore.data.map { prefs ->
@@ -51,7 +53,8 @@ class SettingsRepositoryImpl @Inject constructor(
             dailyReminderEnabled = prefs[PreferencesKeys.DAILY_REMINDER_ENABLED] ?: false,
             dailyReminderHour = prefs[PreferencesKeys.DAILY_REMINDER_HOUR] ?: 9,
             dailyReminderMinute = prefs[PreferencesKeys.DAILY_REMINDER_MINUTE] ?: 0,
-            onboardingCompleted = prefs[PreferencesKeys.ONBOARDING_COMPLETED] ?: false
+            onboardingCompleted = prefs[PreferencesKeys.ONBOARDING_COMPLETED] ?: false,
+            fontPreset = prefs[PreferencesKeys.FONT_PRESET] ?: "MANROPE"
         )
     }
 
@@ -95,5 +98,9 @@ class SettingsRepositoryImpl @Inject constructor(
 
     override suspend fun setOnboardingCompleted(completed: Boolean) {
         context.dataStore.edit { it[PreferencesKeys.ONBOARDING_COMPLETED] = completed }
+    }
+
+    override suspend fun updateFontPreset(preset: String) {
+        context.dataStore.edit { it[PreferencesKeys.FONT_PRESET] = preset }
     }
 }

@@ -1,12 +1,12 @@
 package app.ember.focus.ui.theme
 
 import android.app.Activity
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
-import androidx.compose.ui.graphics.toArgb
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
@@ -34,9 +34,11 @@ private val DarkColorScheme = darkColorScheme(
 
 @Composable
 fun EmberTheme(
+    fontPreset: String = "MANROPE",
     content: @Composable () -> Unit
 ) {
     val colorScheme = DarkColorScheme
+    val emberTypography = remember(fontPreset) { getEmberTypography(fontPreset) }
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
@@ -50,9 +52,13 @@ fun EmberTheme(
         }
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+    CompositionLocalProvider(
+        LocalEmberTypography provides emberTypography
+    ) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = emberTypography.material,
+            content = content
+        )
+    }
 }

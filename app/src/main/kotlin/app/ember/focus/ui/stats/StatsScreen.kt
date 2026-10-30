@@ -20,7 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -50,6 +50,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import app.ember.focus.ui.theme.AmberAccent
 import app.ember.focus.ui.theme.BackgroundBottom
 import app.ember.focus.ui.theme.BackgroundTop
+import app.ember.focus.ui.theme.EmberTheme
 import app.ember.focus.ui.theme.PrimaryPillFill
 import app.ember.focus.ui.theme.PrimaryPillText
 import app.ember.focus.ui.theme.SecondaryPillBorder
@@ -76,8 +77,7 @@ fun StatsScreen(
                     colors = listOf(BackgroundTop, BackgroundBottom)
                 )
             )
-            .statusBarsPadding()
-            .navigationBarsPadding()
+            .safeDrawingPadding()
             .verticalScroll(rememberScrollState())
     ) {
         // TOP HEADER
@@ -231,12 +231,12 @@ fun StatsScreen(
                             ) {
                                 Text(
                                     text = dayStr,
-                                    fontSize = 12.sp,
+                                    style = EmberTheme.typography.caption,
                                     color = TextCream
                                 )
                                 Text(
                                     text = "$timeStr ${if (goalMet) "· Goal met" else ""}",
-                                    fontSize = 12.sp,
+                                    style = EmberTheme.typography.caption,
                                     color = AmberAccent,
                                     fontWeight = FontWeight.SemiBold
                                 )

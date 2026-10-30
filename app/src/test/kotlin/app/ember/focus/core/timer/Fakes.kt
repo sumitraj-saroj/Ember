@@ -80,4 +80,5 @@ class FakeSettingsRepository : SettingsRepository {
     override suspend fun updateBreakLengths(shortBreak: Int, longBreak: Int) { _settings.value = _settings.value.copy(shortBreakMinutes = shortBreak, longBreakMinutes = longBreak) }
     override suspend fun updateDailyReminder(enabled: Boolean, hour: Int, minute: Int) { _settings.value = _settings.value.copy(dailyReminderEnabled = enabled, dailyReminderHour = hour, dailyReminderMinute = minute) }
     override suspend fun setOnboardingCompleted(completed: Boolean) { _settings.value = _settings.value.copy(onboardingCompleted = completed) }
+    override suspend fun updateFontPreset(preset: String) { _settings.value = _settings.value.copy(fontPreset = preset) }
 }
